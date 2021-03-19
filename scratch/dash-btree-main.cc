@@ -159,12 +159,13 @@ int main (int argc, char *argv[])
     }
   }
 
-  for (size_t i = 0; i < n_clients*map_aps.size(); i++) {
-    int ap_i = uniformDis();
-    Ptr<Node> node_client = CreateObject<Node> ();
+  for (size_t i = 0; i < map_aps.size(); i++) {
+    for (size_t i_client = 0; i_client < n_clients; i_client++) {
+      Ptr<Node> node_client = CreateObject<Node> ();
 
-    clients.Add(node_client);
-    map_aps[ap_i].Add(node_client);
+      clients.Add(node_client);
+      map_aps[i].Add(node_client);
+    }
   }
 
 
