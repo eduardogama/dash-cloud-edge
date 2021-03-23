@@ -158,8 +158,6 @@ int main (int argc, char *argv[])
       map_aps.insert ( std::pair<int, NodeContainer>(network.getNodes().at(i)->getId(), NodeContainer()) );
     }
   }
-  std::cout << "-> " << map_aps.size() << '\n';
-  getchar();
 
   for (int i_client = 0; i_client < n_clients; i_client++) {
     for (auto& ap : map_aps) {
