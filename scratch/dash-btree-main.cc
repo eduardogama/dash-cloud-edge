@@ -158,13 +158,15 @@ int main (int argc, char *argv[])
       map_aps.insert ( std::pair<int, NodeContainer>(network.getNodes().at(i)->getId(), NodeContainer()) );
     }
   }
+  std::cout << "-> " << map_aps.size() << '\n';
+  getchar();
 
-  for (size_t i_client = 0; i_client < n_clients; i_client++) {
-    for (size_t i = 0; i < map_aps.size(); i++) {
+  for (int i_client = 0; i_client < n_clients; i_client++) {
+    for (auto& ap : map_aps) {
       Ptr<Node> node_client = CreateObject<Node> ();
 
       clients.Add(node_client);
-      map_aps[i].Add(node_client);
+      ap.second.Add(node_client);
     }
   }
 
@@ -300,6 +302,7 @@ int main (int argc, char *argv[])
     NodeContainer& node_clients = ap.second;
 
     for (size_t j = 0; j < node_clients.GetN(); j++) {
+      int final_client = 100 * ap.first + UserId;
       double t = poisson();
 
       int screenWidth = 1920;
