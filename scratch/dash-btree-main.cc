@@ -297,6 +297,7 @@ int main (int argc, char *argv[])
 
   int UserId=0;
   for (auto& ap : map_aps) {
+    int final_client = ap.first * 100 + UserId++;
     NodeContainer& node_clients = ap.second;
 
     for (size_t j = 0; j < node_clients.GetN(); j++) {
@@ -317,7 +318,7 @@ int main (int argc, char *argv[])
       player.SetAttribute("StartUpDelay", StringValue("4"));
       player.SetAttribute("ScreenWidth", UintegerValue(screenWidth));
       player.SetAttribute("ScreenHeight", UintegerValue(screenHeight));
-      player.SetAttribute("UserId", UintegerValue(UserId++));
+      player.SetAttribute("UserId", UintegerValue(final_client));
       player.SetAttribute("AllowDownscale", BooleanValue(true));
       player.SetAttribute("AllowUpscale", BooleanValue(true));
       player.SetAttribute("MaxBufferedSeconds", StringValue("60"));
