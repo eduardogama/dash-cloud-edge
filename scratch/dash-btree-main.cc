@@ -297,7 +297,6 @@ int main (int argc, char *argv[])
 
   int UserId=0;
   for (auto& ap : map_aps) {
-    int final_client = ap.first * 100 + UserId++;
     NodeContainer& node_clients = ap.second;
 
     for (size_t j = 0; j < node_clients.GetN(); j++) {
