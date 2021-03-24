@@ -300,7 +300,7 @@ int main (int argc, char *argv[])
     NodeContainer& node_clients = ap.second;
 
     for (size_t j = 0; j < node_clients.GetN(); j++) {
-      int final_client = 100 * ap.first + UserId;
+      int final_client = 100 * ap.first + UserId++;
       double t = poisson();
 
       int screenWidth = 1920;
