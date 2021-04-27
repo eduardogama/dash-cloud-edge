@@ -45,7 +45,6 @@ int main (int argc, char *argv[])
   int dst_server = 7;
 
   //Register packet receptions to calculate throughput
-  NodeStatistics eCtrl = NodeStatistics(&network, 2, "./");
 
 	string scenarioFiles = GetCurrentWorkingDir() + "/../content/scenario";
 	string requestsFile = "requests";
@@ -66,7 +65,12 @@ int main (int argc, char *argv[])
   cmd.AddValue("seed", "Seed experiment.", seed);
   cmd.AddValue("Client", "Number of clients per AP.", n_clients);
 
-	cmd.Parse (argc, argv);
+  cmd.Parse (argc, argv);
+
+  string dir = CreateDir("../dash-multi-layer-" + to_string(seed));
+
+  string filePath = dir + "/Troughput_" + to_string(seed) + "_";
+  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath);
 
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
 
@@ -135,16 +139,6 @@ int main (int argc, char *argv[])
     eCtrl.setLinkCapacityMap(stripv4, srcnode, dstnode, datarate);
     eCtrl.createTroughputFile(stripv4, srcnode, dstnode);
 	}
-
-  // p2p.SetDeviceAttribute ("DataRate", StringValue ("500Mb/s")); // This must not be more than the maximum throughput in 802.11n
-  // for (size_t i = 0; i < network.getNodes().size(); i++) {
-  //   NetDeviceContainer deviceContainer;
-  //   deviceContainer = p2p.Install (nodes.Get(i), cache_nodes.Get(i));
-  //
-  //   address.Assign(deviceContainer);
-  //   address.NewNetwork();
-  //   netDevices.push_back(deviceContainer);
-  // }
 
 	//Store IP adresses
 	std::string addr_file = "addresses";
@@ -392,7 +386,6 @@ int main (int argc, char *argv[])
 
 
 	// %%%%%%%%%%%% sort out the simulation
-	string dir = CreateDir("../dash-multi-layer");
 	AnimationInterface anim(dir + string("/topology.netanim"));
 
 	DASHPlayerTracer::InstallAll(dir + string("/topology-") + to_string(seed) + string(".csv"));
