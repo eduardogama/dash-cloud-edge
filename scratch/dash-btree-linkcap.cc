@@ -75,9 +75,10 @@ int main (int argc, char *argv[])
 	NS_LOG_INFO ("Create Nodes");
 
 	NodeContainer nodes; // Declare nodes objects
-  NodeContainer cache_nodes;
-	nodes.Create(network.getNodes().size());
-  cache_nodes.Create(network.getNodes().size());
+  // NodeContainer cache_nodes;
+
+  nodes.Create(network.getNodes().size());
+  // cache_nodes.Create(network.getNodes().size());
 
 	cout << "Node size = " << network.getNodes().size() << endl;
 	for (unsigned int i = 0; i < network.getNodes().size(); i += 1) {
@@ -94,7 +95,7 @@ int main (int argc, char *argv[])
 	fprintf(stderr, "Installing Internet Stack\n");
 	// Now add ip/tcp stack to all nodes.
 	internet.Install(nodes);
-  internet.Install(cache_nodes);
+  // internet.Install(cache_nodes);
 
 	// create p2p links
 	vector<NetDeviceContainer> netDevices;
@@ -106,7 +107,9 @@ int main (int argc, char *argv[])
     int srcnode = network.getLinks().at(i)->getSrcId();
     int dstnode = network.getLinks().at(i)->getDstId();
 
-    p2p.SetDeviceAttribute("DataRate", DataRateValue( network.getLinks().at(i)->getRate() )); // Mbit/s
+    double datarate = network.getLinks().at(i)->getRate();
+
+    p2p.SetDeviceAttribute("DataRate", DataRateValue( datarate )); // Mbit/s
 
 		// And then install devices and channels connecting our topology
 		NetDeviceContainer deviceContainer;
@@ -115,7 +118,6 @@ int main (int argc, char *argv[])
 		address.Assign(deviceContainer);
 		address.NewNetwork();
     netDevices.push_back(deviceContainer);
-
 
     Ptr<Ipv4> srcipv4 = nodes.Get(srcnode)->GetObject<Ipv4>();
     Ptr<Ipv4> dstipv4 = nodes.Get(dstnode)->GetObject<Ipv4>();
@@ -130,14 +132,25 @@ int main (int argc, char *argv[])
 
     string stripv4 = Ipv4AddressToString(srcipv4->GetAddress(same_bcst, 0).GetBroadcast());
     eCtrl.setLinkMap(stripv4, 0);
+    eCtrl.setLinkCapacityMap(stripv4, srcnode, dstnode, datarate);
     eCtrl.createTroughputFile(stripv4, srcnode, dstnode);
 	}
+
+  // p2p.SetDeviceAttribute ("DataRate", StringValue ("500Mb/s")); // This must not be more than the maximum throughput in 802.11n
+  // for (size_t i = 0; i < network.getNodes().size(); i++) {
+  //   NetDeviceContainer deviceContainer;
+  //   deviceContainer = p2p.Install (nodes.Get(i), cache_nodes.Get(i));
+  //
+  //   address.Assign(deviceContainer);
+  //   address.NewNetwork();
+  //   netDevices.push_back(deviceContainer);
+  // }
 
 	//Store IP adresses
 	std::string addr_file = "addresses";
 	ofstream out_addr_file(addr_file.c_str());
-	for (unsigned int i = 0; i < cache_nodes.GetN(); i++) {
-		Ptr<Node> n = cache_nodes.Get(i);
+	for (unsigned int i = 0; i < nodes.GetN(); i++) {
+		Ptr<Node> n = nodes.Get(i);
 		Ptr<Ipv4> ipv4 = n->GetObject<Ipv4>();
 		for (uint32_t l = 1; l < ipv4->GetNInterfaces(); l++) {
 			out_addr_file << i <<  " " << ipv4->GetAddress(l, 0).GetLocal() << endl;
@@ -160,6 +173,7 @@ int main (int argc, char *argv[])
   Ptr<ListPositionAllocator> positionAlloc = CreateObject <ListPositionAllocator>();
 
   map<int, NodeContainer> map_aps;
+  map<int, pair< int, Ptr<Node> >> m_clients;
   NodeContainer clients;
 
   for (size_t i = 0; i < network.getNodes().size(); i++) {
@@ -169,15 +183,21 @@ int main (int argc, char *argv[])
     }
   }
 
+  int userId = 0;
   for (size_t i_client = 0; i_client < n_clients; i_client++) {
     for (auto& ap : map_aps) {
+      int apId = ap.first;
+      NodeContainer &apContainer = ap.second;
+
       Ptr<Node> node_client = CreateObject<Node> ();
+      pair<int, Ptr<Node>> ap_client{apId, node_client};
 
       clients.Add(node_client);
-      ap.second.Add(node_client);
+      apContainer.Add(node_client);
+      m_clients[userId] = ap_client;
+      userId++;
     }
   }
-
 
   int seedValue = time(0);
   RngSeedManager::SetSeed(seedValue);
@@ -262,8 +282,6 @@ int main (int argc, char *argv[])
     address.NewNetwork();
   }
 
-	Ipv4GlobalRoutingHelper::PopulateRoutingTables();
-
 	// %%%%%%%%%%%% Set up the DASH server
 	Ptr<Node> n_server = nodes.Get(dst_server);
 
@@ -272,12 +290,24 @@ int main (int argc, char *argv[])
 
 	string str_ipv4_server = Ipv4AddressToString(n_server->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
-  DASHServerHelper server(Ipv4Address::GetAny (), 80, str_ipv4_server,
-                          "/content/mpds/", representationStrings, "/content/segments/");
+  // DASHServerHelper server(Ipv4Address::GetAny (), 80, str_ipv4_server,
+  //                         "/content/mpds/", representationStrings, "/content/segments/");
+  //
+  // ApplicationContainer serverApps = server.Install(n_server);
+	// serverApps.Start (Seconds(0.0));
+	// serverApps.Stop (Seconds(stopTime));
 
-  ApplicationContainer serverApps = server.Install(n_server);
-	serverApps.Start (Seconds(0.0));
-	serverApps.Stop (Seconds(stopTime));
+  for (size_t i = 0; i < nodes.GetN(); i++) {
+    Ptr<Node> edgeServer = nodes.Get(i);
+    string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+
+    DASHServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
+                            "/content/mpds/", representationStrings, "/content/segments/");
+
+    ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
+    serverApps.Start (Seconds(0.0));
+    serverApps.Stop (Seconds(stopTime));
+  }
 
   //=======================================================================================
   network.setNodeContainers(&nodes);
@@ -290,73 +320,55 @@ int main (int argc, char *argv[])
   controller->SetServerTableList(&serverTableList);
   controller->SetStartTime(Seconds(0.0));
   controller->SetStopTime(Seconds(stopTime));
+
+  eCtrl.setNodes(&nodes);
+  eCtrl.setController(controller);
 	//=======================================================================================
 
-  vector<double> startTime;
+  Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
-  int UserId=0;
-  for (auto& ap : map_aps) {
-    NodeContainer& node_clients = ap.second;
+  for (auto& client : m_clients) {
+    double start = poisson();
 
-    for (size_t j = 0; j < node_clients.GetN(); j++) {
-      int final_client = 100 * ap.first + UserId++;
-      double t = poisson();
+    int apId             = client.second.first;
+    Ptr<Node> clientNode = client.second.second;
 
-      int screenWidth = 1920;
-      int screenHeight = 1080;
+    int final_client = 100 * apId + client.first;
 
-      stringstream mpd_baseurl;
-      mpd_baseurl << "http://" << str_ipv4_server << "/content/mpds/";
+    int screenWidth = 1920;
+    int screenHeight = 1080;
 
-      stringstream ssMPDURL;
-      ssMPDURL << mpd_baseurl.str() << "vid" << 1 << ".mpd.gz";
+    stringstream mpd_baseurl;
+    mpd_baseurl << "http://" << str_ipv4_server << "/content/mpds/";
 
-  		DASHHttpClientHelper player(ssMPDURL.str());
-      player.SetAttribute("AdaptationLogic", StringValue(AdaptationLogicToUse));
-      player.SetAttribute("StartUpDelay", StringValue("4"));
-      player.SetAttribute("ScreenWidth", UintegerValue(screenWidth));
-      player.SetAttribute("ScreenHeight", UintegerValue(screenHeight));
-      player.SetAttribute("UserId", UintegerValue(final_client));
-      player.SetAttribute("AllowDownscale", BooleanValue(true));
-      player.SetAttribute("AllowUpscale", BooleanValue(true));
-      player.SetAttribute("MaxBufferedSeconds", StringValue("60"));
+    stringstream ssMPDURL;
+    ssMPDURL << mpd_baseurl.str() << "vid" << 1 << ".mpd.gz";
 
-      ApplicationContainer clientApps;
-      clientApps = player.Install(node_clients.Get(j));
+    DASHHttpClientHelper player(ssMPDURL.str());
+    player.SetAttribute("AdaptationLogic", StringValue(AdaptationLogicToUse));
+    player.SetAttribute("StartUpDelay", StringValue("4"));
+    player.SetAttribute("ScreenWidth", UintegerValue(screenWidth));
+    player.SetAttribute("ScreenHeight", UintegerValue(screenHeight));
+    player.SetAttribute("UserId", UintegerValue(final_client));
+    player.SetAttribute("AllowDownscale", BooleanValue(true));
+    player.SetAttribute("AllowUpscale", BooleanValue(true));
+    player.SetAttribute("MaxBufferedSeconds", StringValue("60"));
 
-      Ptr<Application> app = node_clients.Get(j)->GetApplication(0);
-      app->GetObject<HttpClientDashApplication> ()->setServerTableList(&serverTableList);
+    ApplicationContainer clientApps;
+    clientApps = player.Install(clientNode);
+    clientApps.Start(Seconds(start));
+    clientApps.Stop(Seconds(stopTime));
 
-      string str_ipv4_client = Ipv4AddressToString(node_clients.Get(j)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
-      serverTableList[str_ipv4_client] = str_ipv4_server;
+    string str_ipv4_client = Ipv4AddressToString(clientNode->GetObject<Ipv4>()->GetAddress(1,0).GetBroadcast());
 
-      startTime.push_back(t);
-  	}
-  }
+    cout << "user id=" << clientNode->GetId() << " user ip=" << str_ipv4_client
+    << " server=" << str_ipv4_server << " ap=" << apId << endl;
 
-  for (size_t i = 0; i < clients.GetN(); i++) {
-    Ptr<Application> app = clients.Get(i)->GetApplication(0);
+    Ptr<Application> app = clientNode->GetApplication(0);
+    app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
+    serverTableList[str_ipv4_client] = str_ipv4_server;
 
-    for (auto& ap : map_aps) {
-      NodeContainer& node_clients = ap.second;
-
-      bool finded = false;
-      for (size_t j = 0; j < node_clients.GetN(); j++) {
-        if (node_clients.Get(j)->GetId() == clients.Get(i)->GetId()) {
-          finded = true;
-          break;
-        }
-      }
-      if (finded) {
-        string str_ipv4_client = Ipv4AddressToString(clients.Get(i)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
-
-        cout << "user id=" << clients.Get(i)->GetId() << " user ip=" << str_ipv4_client << " server=" << str_ipv4_server << " ap=" << ap.first << endl;
-        break;
-      }
-    }
-
-    app->SetStartTime(Seconds(startTime[i]));
-    app->SetStopTime(Seconds(stopTime));
+    Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, clientNode->GetId());
   }
 
   Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",

@@ -123,7 +123,7 @@ protected:
 
 
   uint32_t node_id;
-  std::string node_ipv4str;
+  std::string strNodeIpv4;
   std::map<std::string, std::string> *serverTableList;
 
 protected: // callbacks/traces

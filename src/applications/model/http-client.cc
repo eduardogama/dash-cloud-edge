@@ -196,7 +196,6 @@ void HttpClientApplication::TryEstablishConnection (void)
         m_socket->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
 //        int errno = m_socket->Connect (InetSocketAddress (Ipv4Address::ConvertFrom(m_peerAddress), m_peerPort));
 //        NS_LOG_DEBUG("Binding to Ipv4:" << Ipv4Address::ConvertFrom(m_peerAddress) << ":" << m_peerPort << ", errno=" << errno);
-
       }
       else if (Ipv6Address::IsMatchingType(m_peerAddress) == true)
       {
@@ -240,15 +239,14 @@ void HttpClientApplication::StartApplication (void)
   NS_LOG_FUNCTION (this);
 
   // only re-init tmpbuffer if it is null
-  if (_tmpbuffer == NULL)
-  {
+  if (_tmpbuffer == NULL) {
     _tmpbuffer = (uint8_t*)malloc(sizeof(uint8_t)* 128*1024); // 128 kB
   }
 
 
   // mark this app as active
   m_active = true;
-  _start_time = Simulator::Now ().GetMilliSeconds ();
+  _start_time = Simulator::Now().GetMilliSeconds();
 
   // Create OutFile
   if (!m_outFile.empty())
@@ -703,7 +701,7 @@ void HttpClientApplication::AgentDoSend (Ptr<Socket> socket, uint32_t txSpace, d
 {
   std::string str_qoe = std::to_string(qoe);
 
-	std::cout << "Client (" << node_id << "," << node_ipv4str << ") " << Simulator::Now ().GetSeconds() << " Socket AgentDoSend QoE video " << str_qoe << std::endl;
+	std::cout << "Client (" << node_id << "," << strNodeIpv4 << ") " << Simulator::Now ().GetSeconds() << " Socket AgentDoSend QoE video " << str_qoe << std::endl;
   // getchar();
 
   uint8_t* buffer = (uint8_t*)str_qoe.c_str();

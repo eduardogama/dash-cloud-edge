@@ -101,20 +101,20 @@ int main (int argc, char *argv[])
 	PointToPointHelper p2p;
 
 	for (unsigned int i = 0; i < network.getLinks().size(); i += 1) {
-    double errRate = network.getLinks().at(i)->getPLoss();
-    DoubleValue rate (errRate);
-    Ptr<RateErrorModel> em1 =
-       CreateObjectWithAttributes<RateErrorModel> ("RanVar", StringValue ("ns3::UniformRandomVariable[Min=0.0,Max=1.0]"), "ErrorRate", rate);
-    Ptr<RateErrorModel> em2 =
-       CreateObjectWithAttributes<RateErrorModel> ("RanVar", StringValue ("ns3::UniformRandomVariable[Min=0.0,Max=1.0]"), "ErrorRate", rate);
+//    double errRate = network.getLinks().at(i)->getPLoss();
+//    DoubleValue rate (errRate);
+//    Ptr<RateErrorModel> em1 =
+//       CreateObjectWithAttributes<RateErrorModel> ("RanVar", StringValue ("ns3::UniformRandomVariable[Min=0.0,Max=1.0]"), "ErrorRate", rate);
+//    Ptr<RateErrorModel> em2 =
+//       CreateObjectWithAttributes<RateErrorModel> ("RanVar", StringValue ("ns3::UniformRandomVariable[Min=0.0,Max=1.0]"), "ErrorRate", rate);
 
     p2p.SetDeviceAttribute("DataRate", DataRateValue( network.getLinks().at(i)->getRate() )); // Mbit/s
 
 		// And then install devices and channels connecting our topology
 		NetDeviceContainer deviceContainer;
 		deviceContainer = p2p.Install(nodes.Get(network.getLinks().at(i)->getSrcId()), nodes.Get(network.getLinks().at(i)->getDstId()));
-    deviceContainer.Get(0)->SetAttribute("ReceiveErrorModel", PointerValue (em1));
-		deviceContainer.Get(1)->SetAttribute("ReceiveErrorModel", PointerValue (em2));
+//    deviceContainer.Get(0)->SetAttribute("ReceiveErrorModel", PointerValue (em1));
+//		deviceContainer.Get(1)->SetAttribute("ReceiveErrorModel", PointerValue (em2));
 
 		address.Assign(deviceContainer);
 		address.NewNetwork();

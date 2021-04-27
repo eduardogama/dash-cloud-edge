@@ -49,9 +49,12 @@ public:
 	bool hasToRedirect ();
 	void DoSendRedirect ();
 
-	void CacheJoinAssignment(unsigned from, unsigned to);
+	void RedirectUsers(unsigned actualNode, unsigned nextNode);
 
+	void CacheJoinAssignment(unsigned from, unsigned to);
 	void onAddContainer(unsigned from, unsigned to, int content, int userId);
+
+	GroupUser* AddUserInGroup (unsigned from, unsigned to, int content, unsigned userId);
 
 private:
   virtual void StartApplication (void);
@@ -65,9 +68,9 @@ private:
 
 	bool canAlloc (vector<int>& g_i, int actualNode, int nextNode);
 
-	GroupUser* AddUserInGroup (unsigned from, unsigned to, int content, unsigned userId);
-
 	string getInterfaceNode (int actualNode, int nextNode);
+	string getInterfaceNode(int node);
+
 
   bool ConnectionRequested (Ptr<Socket> socket, const Address& address);
   void ConnectionAccepted (Ptr<Socket> socket, const Address& address);
@@ -267,24 +270,6 @@ TypeOpt DashController::tryRequest(unsigned from, unsigned to, int content, int 
 	return takeAction;
 }
 
-vector<int> DashController::FindCommonGroups (unsigned actualNode, unsigned nextNode)
-{
-	vector<int> groups_i;
-
-	for (unsigned i = 0; i < groups.size(); i++) {
-		Path path = groups[i]->getRoute();
-		path.goStart();
-		while (!path.isEndPath()) {
-			if (path.getActualStep() == actualNode && path.getNextStep() == nextNode) {
-				groups_i.push_back(i);
-			}
-			path.goAhead();
-		}
-	}
-
-	return groups_i;
-}
-
 vector<int> DashController::getFreeGroups(vector<int>& groups_i)
 {
 	vector<int> free_groups_index	(groups.size(), 0);
@@ -307,6 +292,44 @@ void DashController::onAddContainer(unsigned from, unsigned to, int content, int
 
 	DashController::ResourceAllocation(free_groups_index);
 	DashController::setSendRedirect(true);
+}
+
+void DashController::RedirectUsers(unsigned actualNode, unsigned nextNode)
+{
+	vector<int> groups_i;
+
+	for (unsigned i = 0; i < this->groups.size(); i++) {
+		Path path = this->groups[i]->getRoute();
+		path.goStart();
+		while (!path.isEndPath()) {
+			if (path.getActualStep() == actualNode && path.getNextStep() == nextNode) {
+				groups_i.push_back(i);
+			}
+			path.goAhead();
+		}
+	}
+
+	for (auto& g_i : groups_i) {
+		network->SearchRoute(nextNode, groups[g_i]->getFrom());
+
+		// std::cout << "groups(" << groups[g_i]->getId() << ") = " << network->getRoute() << '\n';
+		// getchar();
+		string newServerIp = getInterfaceNode(nextNode);
+
+		groups[g_i]->setRoute(network->getRoute());
+		groups[g_i]->setActualNode(actualNode);
+		groups[g_i]->setServerIp(newServerIp);
+
+		(*serverTableList)[groups[g_i]->getId()] = newServerIp;
+	}
+}
+
+string DashController::getInterfaceNode(int node)
+{
+	Ptr<Node> nodesrc = network->getNodeContainers()->Get(node);
+	Ptr<Ipv4> srcIpv4 = nodesrc->GetObject<Ipv4> ();
+
+	return Ipv4AddressToString(srcIpv4->GetAddress(1, 0).GetLocal());
 }
 
 void DashController::ResourceAllocation (vector<int>& free_groups)
@@ -373,16 +396,31 @@ void DashController::CacheJoinAssignment(unsigned from, unsigned to)
 {
 }
 
+vector<int> DashController::FindCommonGroups (unsigned actualNode, unsigned nextNode)
+{
+	vector<int> groups_i;
+
+	for (unsigned i = 0; i < groups.size(); i++) {
+		Path path = groups[i]->getRoute();
+		path.goStart();
+		while (!path.isEndPath()) {
+			if (path.getActualStep() == actualNode && path.getNextStep() == nextNode) {
+				groups_i.push_back(i);
+			}
+			path.goAhead();
+		}
+	}
+
+	return groups_i;
+}
+
 GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int content, unsigned userId)
 {
-	network->SearchRoute(to, from);
-
 	Ptr<Node> n = network->getClientContainers()->Get(userId);
 	Ptr<Ipv4> ipv4src = n->GetObject<Ipv4>();
 
-
 	string str_ipv4src = Ipv4AddressToString(ipv4src->GetAddress(1,0).GetLocal());
-	string str_ipv4bst = Ipv4AddressToString(network->getNodeContainers()->Get(from)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+	string str_ipv4bst = Ipv4AddressToString(ipv4src->GetAddress(1,0).GetBroadcast());
 
 	EndUser *new_user = new EndUser(userId, str_ipv4src, content);
 
@@ -407,8 +445,10 @@ GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int conten
   }
 
   if (!insert_group) {
+		network->SearchRoute(to, from);
 		groups.push_back(new GroupUser(str_ipv4bst, m_serverIp, from, to, network->getRoute(), new_user));
 	}
+
 
 	return groups[groups.size() - 1];
 }

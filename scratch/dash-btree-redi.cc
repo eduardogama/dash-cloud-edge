@@ -1,4 +1,4 @@
-  #include "ns3/core-module.h"
+#include "ns3/core-module.h"
 #include "ns3/point-to-point-module.h"
 #include "ns3/network-module.h"
 #include "ns3/applications-module.h"
@@ -26,38 +26,33 @@
 #include "ctrl-dash-main.h"
 #include "utils.h"
 
-#include "group-user.h"
-
 #include "node-statistics.h"
-
+#include "group-user.h"
 #include "ns3/hash.h"
-
-#include "ns3/gnuplot.h"
 
 #include <ctime>
 
 using namespace ns3;
 
 
-NS_LOG_COMPONENT_DEFINE ("MonitorDashMain");
+NS_LOG_COMPONENT_DEFINE ("DashBTreeRedirect");
 
 int main (int argc, char *argv[])
 {
   NetworkTopology network;
-
-  //Register packet receptions to calculate throughput
-  NodeStatistics eCtrl = NodeStatistics(&network, 2);
-
   std::map<string, string> serverTableList;
 	unsigned n_ap = 0, n_clients = 1;
-  int dst_server = 2;
+  int dst_server = 7;
 
-	std::string scenarioFiles = GetCurrentWorkingDir() + "/../content/scenario";
-	std::string requestsFile = "requests";
-	std::string DashTraceFile = "report.csv";
-	std::string ServerThroughputTraceFile = "server_throughput.csv";
-	std::string RepresentationType = "netflix";
-	std::string AdaptationLogicToUse = "dash::player::RateAndBufferBasedAdaptationLogic";
+  //Register packet receptions to calculate throughput
+  NodeStatistics eCtrl = NodeStatistics(&network, 2, "./");
+
+	string scenarioFiles = GetCurrentWorkingDir() + "/../content/scenario";
+	string requestsFile = "requests";
+	string DashTraceFile = "report.csv";
+	string ServerThroughputTraceFile = "server_throughput.csv";
+	string RepresentationType = "netflix";
+	string AdaptationLogicToUse = "dash::player::RateAndBufferBasedAdaptationLogic";
 
 	int stopTime = 30;
 	int seed = 0;
@@ -75,12 +70,15 @@ int main (int argc, char *argv[])
 
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
 
-  ReadTopology(scenarioFiles + "/path_l3_link", scenarioFiles + "/path_l3_nodes", network);
+  ReadTopology(scenarioFiles + "/btree_l3_link", scenarioFiles + "/btree_l3_nodes", network);
 
 	NS_LOG_INFO ("Create Nodes");
 
 	NodeContainer nodes; // Declare nodes objects
-	nodes.Create(network.getNodes().size());
+  // NodeContainer cache_nodes;
+
+  nodes.Create(network.getNodes().size());
+  // cache_nodes.Create(network.getNodes().size());
 
 	cout << "Node size = " << network.getNodes().size() << endl;
 	for (unsigned int i = 0; i < network.getNodes().size(); i += 1) {
@@ -97,6 +95,7 @@ int main (int argc, char *argv[])
 	fprintf(stderr, "Installing Internet Stack\n");
 	// Now add ip/tcp stack to all nodes.
 	internet.Install(nodes);
+  // internet.Install(cache_nodes);
 
 	// create p2p links
 	vector<NetDeviceContainer> netDevices;
@@ -105,7 +104,6 @@ int main (int argc, char *argv[])
 	PointToPointHelper p2p;
 
 	for (unsigned int i = 0; i < network.getLinks().size(); i += 1) {
-
     int srcnode = network.getLinks().at(i)->getSrcId();
     int dstnode = network.getLinks().at(i)->getDstId();
 
@@ -127,18 +125,26 @@ int main (int argc, char *argv[])
     int same_bcst = -1;
     for (size_t i_ipv4 = 1; i_ipv4 < dstipv4->GetNInterfaces(); i_ipv4++) {
       same_bcst = srcipv4->GetInterfaceForPrefix(dstipv4->GetAddress(i_ipv4, 0).GetLocal(), dstipv4->GetAddress(i_ipv4, 0).GetMask());
-      std::cout << "->" <<  dstipv4->GetAddress(i_ipv4, 0).GetLocal() << '\n';
       if (same_bcst != -1) {
         break;
       }
     }
 
     string stripv4 = Ipv4AddressToString(srcipv4->GetAddress(same_bcst, 0).GetBroadcast());
-
     eCtrl.setLinkMap(stripv4, 0);
-    eCtrl.setLinkCapacityMap(stripv4, srcnode, dstnode, datarate/1000000);
+    eCtrl.setLinkCapacityMap(stripv4, srcnode, dstnode, datarate);
     eCtrl.createTroughputFile(stripv4, srcnode, dstnode);
 	}
+
+  // p2p.SetDeviceAttribute ("DataRate", StringValue ("500Mb/s")); // This must not be more than the maximum throughput in 802.11n
+  // for (size_t i = 0; i < network.getNodes().size(); i++) {
+  //   NetDeviceContainer deviceContainer;
+  //   deviceContainer = p2p.Install (nodes.Get(i), cache_nodes.Get(i));
+  //
+  //   address.Assign(deviceContainer);
+  //   address.NewNetwork();
+  //   netDevices.push_back(deviceContainer);
+  // }
 
 	//Store IP adresses
 	std::string addr_file = "addresses";
@@ -167,6 +173,7 @@ int main (int argc, char *argv[])
   Ptr<ListPositionAllocator> positionAlloc = CreateObject <ListPositionAllocator>();
 
   map<int, NodeContainer> map_aps;
+  map<int, pair< int, Ptr<Node> >> m_clients;
   NodeContainer clients;
 
   for (size_t i = 0; i < network.getNodes().size(); i++) {
@@ -176,12 +183,19 @@ int main (int argc, char *argv[])
     }
   }
 
+  int userId = 0;
   for (size_t i_client = 0; i_client < n_clients; i_client++) {
     for (auto& ap : map_aps) {
+      int apId = ap.first;
+      NodeContainer &apContainer = ap.second;
+
       Ptr<Node> node_client = CreateObject<Node> ();
+      pair<int, Ptr<Node>> ap_client{apId, node_client};
 
       clients.Add(node_client);
-      ap.second.Add(node_client);
+      apContainer.Add(node_client);
+      m_clients[userId] = ap_client;
+      userId++;
     }
   }
 
@@ -210,11 +224,15 @@ int main (int argc, char *argv[])
     }
   }
 
-  positionAlloc->Add(Vector(0, 15, 0));   // Ap 0
-	positionAlloc->Add(Vector(0, 30, 0));  // Ap 1
+  positionAlloc->Add(Vector(50, 15, 0));   // Ap 0
+	positionAlloc->Add(Vector(250, 15, 0));  // Ap 1
+	positionAlloc->Add(Vector(150, 30, 0)); // router 2
+	positionAlloc->Add(Vector(150, 45, 0)); // router 3
 
-  positionAlloc->Add(Vector(0, 15, 0));   // Ap 0
-	positionAlloc->Add(Vector(0, 30, 0));  // Ap 1
+  positionAlloc->Add(Vector(50, 15, 0));   // Ap 0
+	positionAlloc->Add(Vector(250, 15, 0));  // Ap 1
+	positionAlloc->Add(Vector(150, 30, 0)); // router 2
+	positionAlloc->Add(Vector(150, 45, 0)); // router 3
 
 
   mobility.SetPositionAllocator(positionAlloc);
@@ -226,7 +244,10 @@ int main (int argc, char *argv[])
   }
   // mobility.Install(clients);
   mobility.Install(nodes.Get(1));
+	mobility.Install(nodes.Get(2));
 	mobility.Install(nodes.Get(0));
+	mobility.Install(nodes.Get(7));
+
 
   YansWifiChannelHelper channel = YansWifiChannelHelper::Default();
   YansWifiPhyHelper 	  phy     = YansWifiPhyHelper::Default();
@@ -261,8 +282,6 @@ int main (int argc, char *argv[])
     address.NewNetwork();
   }
 
-	Ipv4GlobalRoutingHelper::PopulateRoutingTables();
-
 	// %%%%%%%%%%%% Set up the DASH server
 	Ptr<Node> n_server = nodes.Get(dst_server);
 
@@ -271,83 +290,85 @@ int main (int argc, char *argv[])
 
 	string str_ipv4_server = Ipv4AddressToString(n_server->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
-  DASHServerHelper server(Ipv4Address::GetAny (), 80, str_ipv4_server,
-                          "/content/mpds/", representationStrings, "/content/segments/");
+  // DASHServerHelper server(Ipv4Address::GetAny (), 80, str_ipv4_server,
+  //                         "/content/mpds/", representationStrings, "/content/segments/");
+  //
+  // ApplicationContainer serverApps = server.Install(n_server);
+	// serverApps.Start (Seconds(0.0));
+	// serverApps.Stop (Seconds(stopTime));
 
-  ApplicationContainer serverApps = server.Install(n_server);
-	serverApps.Start (Seconds(0.0));
-	serverApps.Stop (Seconds(stopTime));
+  for (size_t i = 0; i < nodes.GetN(); i++) {
+    Ptr<Node> edgeServer = nodes.Get(i);
+    string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+
+    DASHServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
+                            "/content/mpds/", representationStrings, "/content/segments/");
+
+    ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
+    serverApps.Start (Seconds(0.0));
+    serverApps.Stop (Seconds(stopTime));
+  }
 
   //=======================================================================================
   network.setNodeContainers(&nodes);
   network.setClientContainers(&clients);
+
+  Ptr<DashController> controller = CreateObject<DashController> ();
+  n_server->AddApplication(controller);
+
+  controller->Setup(&network, str_ipv4_server, Ipv4Address::GetAny (), 1317);
+  controller->SetServerTableList(&serverTableList);
+  controller->SetStartTime(Seconds(0.0));
+  controller->SetStopTime(Seconds(stopTime));
+
+  eCtrl.setNodes(&nodes);
+  eCtrl.setController(controller);
 	//=======================================================================================
 
-  vector<double> startTime;
+  Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
-  for (auto& ap : map_aps) {
-    NodeContainer& node_clients = ap.second;
+  for (auto& client : m_clients) {
+    double start = poisson();
 
-    for (size_t j = 0; j < node_clients.GetN(); j++) {
-      int final_client = 100 * ap.first + node_clients.GetN()*j + j;
-      double t = poisson();
+    int apId             = client.second.first;
+    Ptr<Node> clientNode = client.second.second;
 
-      int screenWidth = 1920;
-      int screenHeight = 1080;
+    int final_client = 100 * apId + client.first;
 
-      stringstream mpd_baseurl;
-      mpd_baseurl << "http://" << str_ipv4_server << "/content/mpds/";
+    int screenWidth = 1920;
+    int screenHeight = 1080;
 
-      stringstream ssMPDURL;
-      ssMPDURL << mpd_baseurl.str() << "vid" << 1 << ".mpd.gz";
+    stringstream mpd_baseurl;
+    mpd_baseurl << "http://" << str_ipv4_server << "/content/mpds/";
 
-  		DASHHttpClientHelper player(ssMPDURL.str());
-      player.SetAttribute("AdaptationLogic", StringValue(AdaptationLogicToUse));
-      player.SetAttribute("StartUpDelay", StringValue("4"));
-      player.SetAttribute("ScreenWidth", UintegerValue(screenWidth));
-      player.SetAttribute("ScreenHeight", UintegerValue(screenHeight));
-      player.SetAttribute("UserId", UintegerValue(final_client));
-      player.SetAttribute("AllowDownscale", BooleanValue(true));
-      player.SetAttribute("AllowUpscale", BooleanValue(true));
-      player.SetAttribute("MaxBufferedSeconds", StringValue("60"));
+    stringstream ssMPDURL;
+    ssMPDURL << mpd_baseurl.str() << "vid" << 1 << ".mpd.gz";
 
-      ApplicationContainer clientApps;
-      clientApps = player.Install(node_clients.Get(j));
+    DASHHttpClientHelper player(ssMPDURL.str());
+    player.SetAttribute("AdaptationLogic", StringValue(AdaptationLogicToUse));
+    player.SetAttribute("StartUpDelay", StringValue("4"));
+    player.SetAttribute("ScreenWidth", UintegerValue(screenWidth));
+    player.SetAttribute("ScreenHeight", UintegerValue(screenHeight));
+    player.SetAttribute("UserId", UintegerValue(final_client));
+    player.SetAttribute("AllowDownscale", BooleanValue(true));
+    player.SetAttribute("AllowUpscale", BooleanValue(true));
+    player.SetAttribute("MaxBufferedSeconds", StringValue("60"));
 
-      Ptr<Application> app = node_clients.Get(j)->GetApplication(0);
-      app->GetObject<HttpClientDashApplication> ()->setServerTableList(&serverTableList);
+    ApplicationContainer clientApps;
+    clientApps = player.Install(clientNode);
+    clientApps.Start(Seconds(start));
+    clientApps.Stop(Seconds(stopTime));
 
-      string str_ipv4_client = Ipv4AddressToString(node_clients.Get(j)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
-      serverTableList[str_ipv4_client] = str_ipv4_server;
+    string str_ipv4_client = Ipv4AddressToString(clientNode->GetObject<Ipv4>()->GetAddress(1,0).GetBroadcast());
 
-      startTime.push_back(t);
-  	}
-  }
+    cout << "user id=" << clientNode->GetId() << " user ip=" << str_ipv4_client
+    << " server=" << str_ipv4_server << " ap=" << apId << endl;
 
-  for (size_t i = 0; i < clients.GetN(); i++) {
-    Ptr<Application> app = clients.Get(i)->GetApplication(0);
+    Ptr<Application> app = clientNode->GetApplication(0);
+    app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
+    serverTableList[str_ipv4_client] = str_ipv4_server;
 
-    for (auto& ap : map_aps) {
-      NodeContainer& node_clients = ap.second;
-
-      bool finded = false;
-      for (size_t j = 0; j < node_clients.GetN(); j++) {
-        if (node_clients.Get(j)->GetId() == clients.Get(i)->GetId()) {
-          finded = true;
-          break;
-        }
-      }
-      if (finded) {
-        string str_ipv4_client = Ipv4AddressToString(clients.Get(i)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
-
-        cout << "user id=" << clients.Get(i)->GetId() << " user ip=" << str_ipv4_client << " server=" << str_ipv4_server << " ap=" << ap.first << endl;
-        // Simulator::Schedule(Seconds(startTime[i]), Run, ap.first, dst_server, clients.Get(i)->GetId() , controller);
-        break;
-      }
-    }
-
-    app->SetStartTime(Seconds(startTime[i]));
-    app->SetStopTime(Seconds(stopTime));
+    Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, clientNode->GetId());
   }
 
   Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
@@ -355,6 +376,16 @@ int main (int argc, char *argv[])
   Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
   Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
 
   Simulator::Schedule(Seconds(0), &NodeStatistics::CalculateThroughput, &eCtrl);

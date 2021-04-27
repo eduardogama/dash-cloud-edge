@@ -50,7 +50,6 @@ class GroupUser
 			this->to			 = to;
 			this->route    = route;
 			this->users.push_back(user);
-
 		}
 
 		virtual ~GroupUser() {}

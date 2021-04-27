@@ -26,16 +26,33 @@ public:
   void setLinkMap(string link, double datarate);
   double getLinkMap(string link);
 
+  void setNodes(NodeContainer *nodes);
+  NodeContainer* getNodes();
+
+  void setController(Ptr<DashController> controller);
+  Ptr<DashController> getController();
+
+  void setLinkCapacityMap(string link, int src, int dst, double datarate);
+  void getLinkCapacityMap(string link);
+  void getLinkCapacityMap(int src, int dst);
+
   void createTroughputFile(string strip, int srcnode, int dstnode);
   void storeTroughputInFile(string strip, double mbs);
 private:
+  Ptr<DashController> controller;
   NetworkTopology *network;
+
   map<string, double> linkMap;
+
+  map<string, double> linkCapacityMap;
+  map<string, pair<int,int>> linkNodesMap;
+
   map<string, string> troughputFile;
+
   double stepsTime;
   string pathFile;
 
-  // ofstream filetostore;
+  NodeContainer *nodes;
 };
 
 NodeStatistics::NodeStatistics (NetworkTopology *network, double stepsTime, string pathFile)
@@ -52,6 +69,38 @@ void NodeStatistics::CheckStatistics (double time)
 void NodeStatistics::setLinkMap(string link, double datarate)
 {
   this->linkMap[link] = datarate;
+}
+
+double NodeStatistics::getLinkMap(string link)
+{
+  return this->linkMap[link];
+}
+
+void NodeStatistics::setNodes(NodeContainer *nodes)
+{
+  this->nodes = nodes;
+}
+
+NodeContainer* NodeStatistics::getNodes()
+{
+  return this->nodes;
+}
+
+void NodeStatistics::setController(Ptr<DashController> controller)
+{
+  this->controller = controller;
+}
+
+Ptr<DashController> NodeStatistics::getController()
+{
+  return this->controller;
+}
+
+void NodeStatistics::setLinkCapacityMap(string link, int src, int dst, double datarate)
+{
+  pair<int,int> linknode{src,dst};
+  this->linkNodesMap[link] = linknode;
+  this->linkCapacityMap[link] = datarate;
 }
 
 void NodeStatistics::createTroughputFile(string strip, int srcnode, int dstnode)
@@ -78,11 +127,6 @@ void NodeStatistics::storeTroughputInFile(string strip, double mbs)
   filetostore.close();
 }
 
-double NodeStatistics::getLinkMap(string link)
-{
-  return this->linkMap[link];
-}
-
 //---------------------------------------------------------------------------------------
 //-- Callback function is called whenever a packet is received successfully.
 //-- This function cumulatively add the size of data packet to totalBytesReceived counter.
@@ -94,10 +138,7 @@ void NodeStatistics::RateCallback(std::string context, Ptr<const Packet> packet)
   int strnode = atoi(str_context[2].c_str());
   int strdev  = atoi(str_context[4].c_str());
 
-  Ptr<Node>      node = network->getNodeContainers()->Get(strnode);
-
-  // if (strdev >= node->GetNDevices())
-  //   return;
+  Ptr<Node>      node = getNodes()->Get(strnode);
 
   Ptr<NetDevice> dev  = node->GetDevice(strdev);
   Ptr<Ipv4>      ipv4 = node->GetObject<Ipv4>();
@@ -119,6 +160,13 @@ void NodeStatistics::CalculateThroughput()
 
     storeTroughputInFile(iplink, mbs);
     setLinkMap(iplink, 0);
+
+    if (mbs > 10) {
+      int actualNode = this->linkNodesMap[iplink].first;
+      int nextNode   = this->linkNodesMap[iplink].second;
+
+      this->controller->RedirectUsers(actualNode, nextNode);
+    }
   }
 
   Simulator::Schedule(Seconds(stepsTime), &NodeStatistics::CalculateThroughput, this);

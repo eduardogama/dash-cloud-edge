@@ -106,14 +106,14 @@ void MultimediaConsumer<Parent>::StartApplication() // Called at time specified 
 {
   ostringstream oss;
   Ptr<Node> node = super::GetNode();
-  node->GetObject<Ipv4>()->GetAddress(1,0).GetLocal().Print(oss);
+  node->GetObject<Ipv4>()->GetAddress(1,0).GetBroadcast().Print(oss);
 
-  super::node_ip = oss.str();
+  super::strNodeIpv4 = oss.str();
   super::node_id = super::GetNode ()->GetId();
 
-  NS_LOG_DEBUG("Client(" << super::node_id << "): Starting Multimedia Consumer - Device Type: " << m_deviceType);
-  NS_LOG_DEBUG("Client(" << super::node_id << "): Screen Resolution: " << m_screenWidth << "x" << m_screenHeight);
-  NS_LOG_DEBUG("Client(" << super::node_id << "): MPD File: " << m_mpdUrl << ", SuperClass: " << super::GetTypeId ().GetName ());
+  NS_LOG_DEBUG("Client(" << super::node_id << "," << super::strNodeIpv4 << "): Starting Multimedia Consumer - Device Type: " << m_deviceType);
+  NS_LOG_DEBUG("Client(" << super::node_id << "," << super::strNodeIpv4 << "): Screen Resolution: " << m_screenWidth << "x" << m_screenHeight);
+  NS_LOG_DEBUG("Client(" << super::node_id << "," << super::strNodeIpv4 << "): MPD File: " << m_mpdUrl << ", SuperClass: " << super::GetTypeId ().GetName ());
 
   string delim = "http://";
   string mpd_request_name;
@@ -121,9 +121,10 @@ void MultimediaConsumer<Parent>::StartApplication() // Called at time specified 
   if (m_mpdUrl.find(delim) == 0) {
     string new_url = m_mpdUrl.substr(7);
     int pos = new_url.find("/");
-    string hostname = new_url.substr(0, pos);
 
-    fprintf(stderr, "Client(%d): Hostname = %s\n", super::node_id, hostname.c_str());
+    string hostname = new_url.substr(0, pos);
+    hostname = super::getServerTableList(super::strNodeIpv4);
+    fprintf(stderr, "Client(%d,%s): Hostname = %s\n", super::node_id, super::strNodeIpv4.c_str(), hostname.c_str());
 
     super::SetRemote(Ipv4Address(hostname.c_str()),80);
     mpd_request_name = new_url.substr(pos+1);
@@ -165,7 +166,7 @@ void MultimediaConsumer<Parent>::StartApplication() // Called at time specified 
 
   super::SetAttribute("FileToRequest", StringValue(mpd_request_name));
   super::SetAttribute("WriteOutfile", StringValue(m_tempMpdFile));
-  super::SetAttribute("KeepAlive", StringValue("true"));
+  super::SetAttribute("KeepAlive", StringValue("false"));
 
   // do base stuff
   super::StartApplication();

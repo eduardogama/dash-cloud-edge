@@ -139,7 +139,7 @@ private:
 protected:
 
   uint32_t node_id;
-  string   node_ip;
+  string   strNodeIpv4;
 
   TracedCallback<Ptr<ns3::Application>, std::string> m_downloadStartedTrace;
   TracedCallback<Ptr<ns3::Application>, std::string, long> m_headerReceivedTrace;

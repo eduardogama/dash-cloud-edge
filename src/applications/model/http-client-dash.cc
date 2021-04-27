@@ -139,6 +139,13 @@ void HttpClientDashApplication::TryEstablishConnection()
   m_bytesSent = 0;
 
   if (!m_keepAlive || m_socket == 0) {
+
+    // string hostname = new_url.substr(0, pos);
+    string hostname = getServerTableList(strNodeIpv4);
+    fprintf(stderr, "Client(%d,%s): Hostname = %s\n", node_id, strNodeIpv4.c_str(), hostname.c_str());
+    // getchar();
+    SetRemote(Ipv4Address(hostname.c_str()),80);
+
     if (m_socket == 0) {
       TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
       m_socket = Socket::CreateSocket (GetNode (), tid); //  TCP NewReno per default (according to documentation)
