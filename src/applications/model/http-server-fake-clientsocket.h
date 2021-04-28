@@ -29,15 +29,11 @@ public:
 
   virtual ~HttpServerFakeClientSocket();
 
-
   void HandleIncomingData(Ptr<Socket> socket);
-
   void HandleReadyToTransmit(Ptr<Socket> socket, uint32_t txSize);
-
 
   void ConnectionClosedNormal (Ptr<Socket> socket);
   void ConnectionClosedError (Ptr<Socket> socket);
-
 
   void LogStateChange(const ns3::TcpSocket::TcpStates_t old_state, const ns3::TcpSocket::TcpStates_t new_state);
   void LogCwndChange(uint32_t oldCwnd, uint32_t newCwnd);
@@ -52,8 +48,6 @@ protected:
   std::string ParseHTTPHeader(std::string data);
 
   long GetFileSize(std::string filename);
-
-
 
 protected:
   std::string m_content_dir;

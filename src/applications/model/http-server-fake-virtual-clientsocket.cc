@@ -17,8 +17,6 @@
 namespace ns3
 {
 
-
-
 HttpServerFakeVirtualClientSocket::HttpServerFakeVirtualClientSocket(uint64_t socket_id,
     std::string contentDir,
     std::map<std::string /* filename */, long /* file size */>& fileSizes,
@@ -69,32 +67,24 @@ void HttpServerFakeVirtualClientSocket::FinishedIncomingData(Ptr<Socket> socket,
     uint8_t tmp[4096];
 
 
-
-    if (std::find(m_virtualFiles.begin(), m_virtualFiles.end(), filename) != m_virtualFiles.end())
-    {
+    if (std::find(m_virtualFiles.begin(), m_virtualFiles.end(), filename) != m_virtualFiles.end()) {
       // handle virtual payload
       // fill tmp with some random data
       fprintf(stderr, "VirtualServer(%ld): Generating virtual payload with size %ld ...\n", m_socket_id, filesize);
-      for (int i = 0; i < 4096; i++)
-      {
+      for (int i = 0; i < 4096; i++) {
         tmp[i] = (uint8_t)rand();
       }
 
-
       int cnt = 0;
-
-      while (cnt < filesize)
-      {
-        if (cnt + 4096 < filesize)
-        {
+      while (cnt < filesize) {
+        if (cnt + 4096 < filesize) {
           AddBytesToTransmit(tmp, 4096);
         } else {
           AddBytesToTransmit(tmp, filesize - cnt);
         }
         cnt += 4096;
       }
-    } else if (m_virtualHostedFiles.find(filename) != m_virtualHostedFiles.end())
-    {
+    } else if (m_virtualHostedFiles.find(filename) != m_virtualHostedFiles.end()) {
       fprintf(stderr, "VirtualServer(%ld): Opening file in memory with size %ld ...\n", m_socket_id, filesize);
       // handle actual payload
 
@@ -102,20 +92,17 @@ void HttpServerFakeVirtualClientSocket::FinishedIncomingData(Ptr<Socket> socket,
 
       AddBytesToTransmit((const uint8_t*)bytes_memory.c_str(),bytes_memory.length());
 
-    } else
-    {
+    } else {
       fprintf(stderr, "VirtualServer(%ld): Opening file on disk with size %ld ...\n", m_socket_id, filesize);
       // handle actual payload
       FILE* fp = fopen(filename.c_str(), "rb");
 
       int size_returned = 4096;
 
-      while (size_returned == 4096)
-      {
+      while (size_returned == 4096) {
         size_returned = fread(tmp, 1, 4096, fp);
 
-        if (size_returned > 0)
-        {
+        if (size_returned > 0) {
           AddBytesToTransmit(tmp, size_returned);
         }
       }
@@ -124,10 +111,7 @@ void HttpServerFakeVirtualClientSocket::FinishedIncomingData(Ptr<Socket> socket,
     }
   }
 
-
   HandleReadyToTransmit(socket, socket->GetTxAvailable());
 }
-
-
 
 };

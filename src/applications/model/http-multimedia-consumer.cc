@@ -122,11 +122,10 @@ void MultimediaConsumer<Parent>::StartApplication() // Called at time specified 
     string new_url = m_mpdUrl.substr(7);
     int pos = new_url.find("/");
 
-    string hostname = new_url.substr(0, pos);
-    hostname = super::getServerTableList(super::strNodeIpv4);
-    fprintf(stderr, "Client(%d,%s): Hostname = %s\n", super::node_id, super::strNodeIpv4.c_str(), hostname.c_str());
+    super::m_hostName = super::getServerTableList(super::strNodeIpv4);
+    fprintf(stderr, "Client(%d,%s): Hostname = %s\n", super::node_id, super::strNodeIpv4.c_str(), super::m_hostName.c_str());
 
-    super::SetRemote(Ipv4Address(hostname.c_str()),80);
+    super::SetRemote(Ipv4Address(super::m_hostName.c_str()),80);
     mpd_request_name = new_url.substr(pos+1);
   }
 
@@ -166,7 +165,7 @@ void MultimediaConsumer<Parent>::StartApplication() // Called at time specified 
 
   super::SetAttribute("FileToRequest", StringValue(mpd_request_name));
   super::SetAttribute("WriteOutfile", StringValue(m_tempMpdFile));
-  super::SetAttribute("KeepAlive", StringValue("false"));
+  super::SetAttribute("KeepAlive", StringValue("true"));
 
   // do base stuff
   super::StartApplication();
@@ -481,7 +480,7 @@ void MultimediaConsumer<Parent>::OnMultimediaFile()
       NS_LOG_DEBUG("Init Segment received (rep=" << m_curRepId << ")");
       cout << "Init Segment received (rep=" << m_curRepId << ")" << '\n';
     }
-    getchar();
+    // getchar();
   } else {
     // normal segment
 
@@ -640,7 +639,7 @@ template<class Parent>
 void MultimediaConsumer<Parent>::DownloadInitSegment()
 {
   NS_LOG_DEBUG("Downloading init segment... " << m_baseURL + m_initSegment << ";");
-  getchar();
+  // getchar();
 }
 
 template<class Parent>

@@ -400,7 +400,7 @@ bool DASHFakeServerApplication::ConnectionRequested (Ptr<Socket> socket, const A
 void DASHFakeServerApplication::ConnectionAccepted (Ptr<Socket> socket, const Address& address)
 {
   NS_LOG_FUNCTION (this << socket << address);
-  fprintf(stderr, "DASH Fake Server: Connection Accepted!\n");
+  fprintf(stderr, "DASH Fake Server(%s): Connection Accepted!\n", m_hostName.c_str());
 
   uint64_t socket_id = RegisterSocket(socket);
 
@@ -424,13 +424,14 @@ void DASHFakeServerApplication::ConnectionAccepted (Ptr<Socket> socket, const Ad
 void DASHFakeServerApplication::FinishedCallback (uint64_t socket_id)
 {
   // create timer to finish this, because if we do it in here, we will crash the app
-  Simulator::Schedule(Seconds(1.0), &DASHFakeServerApplication::DoFinishSocket, this, socket_id);
+  Simulator::Schedule(Seconds(0.1), &DASHFakeServerApplication::DoFinishSocket, this, socket_id);
+  // DASHFakeServerApplication::DoFinishSocket(socket_id);
 }
 
 void DASHFakeServerApplication::DoFinishSocket(uint64_t socket_id)
 {
   if (m_activeClients.find(socket_id) != m_activeClients.end()) {
-    std::cout << "ENTROU DoFinishSocket\n";
+    // std::cout << "ENTROU DoFinishSocket\n";
     // getchar();
 
     HttpServerFakeClientSocket* tmp = m_activeClients[socket_id];

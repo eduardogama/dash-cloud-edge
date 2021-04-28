@@ -39,21 +39,13 @@ HttpServerFakeClientSocket::HttpServerFakeClientSocket(uint64_t socket_id,
   m_is_virtual_file = false;
 }
 
-
-
 HttpServerFakeClientSocket::~HttpServerFakeClientSocket()
 {
   fprintf(stderr, "Server(%ld): Destructing Client Socket(%ld)...\n", m_socket_id, m_socket_id);
   this->m_bytesToTransmit.clear();
 }
 
-
-
-
-
-
-void
-HttpServerFakeClientSocket::HandleIncomingData(Ptr<Socket> socket)
+void HttpServerFakeClientSocket::HandleIncomingData(Ptr<Socket> socket)
 {
   Ptr<Packet> packet;
   Address from;
@@ -121,17 +113,23 @@ HttpServerFakeClientSocket::ParseHTTPHeader(std::string data)
 
 
   // check if keep-alive is set
-  if (data.find("Connection: keep-alive") != std::string::npos)
-  {
+  if (data.find("Connection: keep-alive") != std::string::npos) {
     this->m_keep_alive = true;
+  } else {
+    std::cout << "server entrou " << '\n';
+    this->m_keep_alive  = false;
+    this->m_is_shutdown = false;
   }
 
   return sFilename;
 }
 
-
 void HttpServerFakeClientSocket::ConnectionClosedNormal(Ptr<Socket> socket)
 {
+  if (socket == 0) {
+     return;
+  }
+  
   fprintf(stderr, "Server(%ld): Connection closing normally...\n", m_socket_id);
   // just in case, make sure the callbacks are no longer active
 
@@ -143,9 +141,12 @@ void HttpServerFakeClientSocket::ConnectionClosedNormal(Ptr<Socket> socket)
   this->m_finished_callback(this->m_socket_id);
 }
 
-
 void HttpServerFakeClientSocket::ConnectionClosedError(Ptr<Socket> socket)
 {
+  if (socket == 0) {
+     return;
+  }
+
   fprintf(stderr, "Server(%ld): Connection closing with error...\n", m_socket_id);
   // just in case, make sure the callbacks are no longer active
 
@@ -157,13 +158,11 @@ void HttpServerFakeClientSocket::ConnectionClosedError(Ptr<Socket> socket)
   this->m_finished_callback(this->m_socket_id);
 }
 
-
 // GetFileSize either from m_fileSizes map or from disk
 long HttpServerFakeClientSocket::GetFileSize(std::string filename)
 {
   // check if is already in m_fileSizes
-  if (m_fileSizes.find(filename) != m_fileSizes.end())
-  {
+  if (m_fileSizes.find(filename) != m_fileSizes.end()) {
     return m_fileSizes[filename];
   }
   // else: query disk for file size
@@ -171,8 +170,7 @@ long HttpServerFakeClientSocket::GetFileSize(std::string filename)
   struct stat stat_buf;
   int rc = stat(filename.c_str(), &stat_buf);
 
-  if (rc == 0)
-  {
+  if (rc == 0) {
     m_fileSizes[filename] = stat_buf.st_size;
     return stat_buf.st_size;
   }
@@ -181,23 +179,17 @@ long HttpServerFakeClientSocket::GetFileSize(std::string filename)
   return -1;
 }
 
-
-
-void
-HttpServerFakeClientSocket::LogCwndChange(uint32_t oldCwnd, uint32_t newCwnd)
+void HttpServerFakeClientSocket::LogCwndChange(uint32_t oldCwnd, uint32_t newCwnd)
 {
   fprintf(stderr, "Server(%ld): Cwnd Changed %d -> %d\n", m_socket_id, oldCwnd, newCwnd);
 }
 
-
-void
-HttpServerFakeClientSocket::LogStateChange(const ns3::TcpSocket::TcpStates_t old_state, const ns3::TcpSocket::TcpStates_t new_state)
+void HttpServerFakeClientSocket::LogStateChange(const ns3::TcpSocket::TcpStates_t old_state, const ns3::TcpSocket::TcpStates_t new_state)
 {
   fprintf(stderr, "Server(%ld): Socket State Change %s -> %s\n", m_socket_id, ns3::TcpSocket::TcpStateName[old_state], ns3::TcpSocket::TcpStateName[new_state]);
 }
 
-void
-HttpServerFakeClientSocket::FinishedIncomingData(Ptr<Socket> socket, Address from, std::string data)
+void HttpServerFakeClientSocket::FinishedIncomingData(Ptr<Socket> socket, Address from, std::string data)
 {
   fprintf(stderr, "Server(%ld)::FinishedIncomingData(socket,data=str(%ld))\n", m_socket_id, data.length());
   // now parse this request (TODO) and reply
@@ -372,8 +364,6 @@ HttpServerFakeClientSocket::HandleReadyToTransmit(Ptr<Socket> socket, uint32_t t
         free(buffer);
       }
     }
-
-
 
     int amountSent = socket->Send (replyPacket);
     if (amountSent <= 0)

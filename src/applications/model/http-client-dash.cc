@@ -140,13 +140,8 @@ void HttpClientDashApplication::TryEstablishConnection()
 
   if (!m_keepAlive || m_socket == 0) {
 
-    // string hostname = new_url.substr(0, pos);
-    string hostname = getServerTableList(strNodeIpv4);
-    fprintf(stderr, "Client(%d,%s): Hostname = %s\n", node_id, strNodeIpv4.c_str(), hostname.c_str());
-    // getchar();
-    SetRemote(Ipv4Address(hostname.c_str()),80);
-
     if (m_socket == 0) {
+      std::cout << "creating socket client" << '\n';
       TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
       m_socket = Socket::CreateSocket (GetNode (), tid); //  TCP NewReno per default (according to documentation)
       if (Ipv4Address::IsMatchingType(m_peerAddress) == true) {
@@ -194,14 +189,22 @@ void HttpClientDashApplication::ConnectionFailed (Ptr<Socket> socket)
 
 void HttpClientDashApplication::ConnectionClosedNormal (Ptr<Socket> socket)
 {
+  if (socket == 0) {
+    return;
+  }
+
   fprintf(stderr, "Client(%d): Socket was closed normally\n", node_id);
   // socket is in CLOSE_WAIT state --> close the socket here --> socket will be in LAST_ACK state
   socket->Close();
+
   socket->SetCloseCallbacks(MakeNullCallback<void, Ptr<Socket> > (),MakeNullCallback<void, Ptr<Socket> > ());
 }
 
 void HttpClientDashApplication::ConnectionClosedError (Ptr<Socket> socket)
 {
+  if (socket == 0) {
+    return;
+  }
   fprintf(stderr,"Client(%d): Socket was closed with an error, errno=%d; Trying to open it again...\n", node_id, socket->GetErrno());
   socket->SetCloseCallbacks(MakeNullCallback<void, Ptr<Socket> > (),MakeNullCallback<void, Ptr<Socket> > ());
 
@@ -221,6 +224,18 @@ void HttpClientDashApplication::OnReadySend (Ptr<Socket> localSocket, uint32_t t
 void HttpClientDashApplication::DoSendGetRequest (Ptr<Socket> localSocket, uint32_t txSpace)
 {
   NS_LOG_FUNCTION (this);
+
+  string hostname = getServerTableList(strNodeIpv4);
+  if (m_hostName != hostname ) {
+    fprintf(stderr, "Client(%d,%s): Old Hostname = %s new Hostname = %s\n", node_id, strNodeIpv4.c_str(), m_hostName.c_str(), hostname.c_str());
+    // getchar();
+
+    m_hostName = hostname;
+    SetRemote(Ipv4Address(m_hostName.c_str()),80);
+    SetAttribute("KeepAlive", StringValue("false"));
+  } else {
+    SetAttribute("KeepAlive", StringValue("true"));
+  }
 
   m_downloadStartedTrace(this, this->m_fileToRequest);
 
@@ -245,6 +260,7 @@ void HttpClientDashApplication::DoSendGetRequest (Ptr<Socket> localSocket, uint3
   string requestString = requestSS.str();
 
   NS_LOG_INFO ("CLIENT: Initiating GET request of length " << requestString.length());
+  cout << "CLIENT: Initiating GET request of length " << requestString.length() << " in hostname " << m_hostName << "****" << endl;
 
   // copy the pointer
   uint8_t* buffer = (uint8_t*)requestString.c_str();
