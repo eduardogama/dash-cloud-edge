@@ -116,7 +116,6 @@ HttpServerFakeClientSocket::ParseHTTPHeader(std::string data)
   if (data.find("Connection: keep-alive") != std::string::npos) {
     this->m_keep_alive = true;
   } else {
-    std::cout << "server entrou " << '\n';
     this->m_keep_alive  = false;
     this->m_is_shutdown = false;
   }
@@ -129,7 +128,7 @@ void HttpServerFakeClientSocket::ConnectionClosedNormal(Ptr<Socket> socket)
   if (socket == 0) {
      return;
   }
-  
+
   fprintf(stderr, "Server(%ld): Connection closing normally...\n", m_socket_id);
   // just in case, make sure the callbacks are no longer active
 
@@ -195,7 +194,7 @@ void HttpServerFakeClientSocket::FinishedIncomingData(Ptr<Socket> socket, Addres
   // now parse this request (TODO) and reply
   std::string filename = m_content_dir  + ParseHTTPHeader(data);
 
-  fprintf(stderr, "Server(%ld): Opening '%s'\n", m_socket_id, filename.c_str());
+  // fprintf(stderr, "Server(%ld): Opening '%s'\n", m_socket_id, filename.c_str());
 
   long filesize = GetFileSize(filename);
 
@@ -203,7 +202,7 @@ void HttpServerFakeClientSocket::FinishedIncomingData(Ptr<Socket> socket, Addres
 
   if (filesize == -1)
   {
-    fprintf(stderr, "Server(%ld): Error, '%s' not found!\n", m_socket_id, filename.c_str());
+    // fprintf(stderr, "Server(%ld): Error, '%s' not found!\n", m_socket_id, filename.c_str());
     // return 404
     std::string replyString("HTTP/1.1 404 Not Found\r\n\r\n");
 
@@ -231,7 +230,7 @@ void HttpServerFakeClientSocket::FinishedIncomingData(Ptr<Socket> socket, Addres
     {
       // handle virtual payload
       // fill tmp with some random data
-      fprintf(stderr, "Server(%ld): Generating virtual payload of size %ld ...\n", m_socket_id, filesize);
+      // fprintf(stderr, "Server(%ld): Generating virtual payload of size %ld ...\n", m_socket_id, filesize);
 
 
       this->m_totalBytesToTx += filesize;
@@ -258,7 +257,7 @@ void HttpServerFakeClientSocket::FinishedIncomingData(Ptr<Socket> socket, Addres
       } */
     } else
     {
-      fprintf(stderr, "Server(%ld): Opening file on disk with size %ld ...\n", m_socket_id, filesize);
+      // fprintf(stderr, "Server(%ld): Opening file on disk with size %ld ...\n", m_socket_id, filesize);
       // handle actual payload
       FILE* fp = fopen(filename.c_str(), "rb");
 
@@ -289,7 +288,7 @@ HttpServerFakeClientSocket::HandleReadyToTransmit(Ptr<Socket> socket, uint32_t t
 
   if (m_totalBytesToTx == 0) // do nothing
   {
-    fprintf(stderr, "Server(%ld)::HandleReadyToTransmit: Nothing to transmit (yet)...\n", m_socket_id);
+    // fprintf(stderr, "Server(%ld)::HandleReadyToTransmit: Nothing to transmit (yet)...\n", m_socket_id);
     return;
   }
   if (m_currentBytesTx >= m_totalBytesToTx && m_totalBytesToTx > 0)
@@ -368,7 +367,7 @@ HttpServerFakeClientSocket::HandleReadyToTransmit(Ptr<Socket> socket, uint32_t t
     int amountSent = socket->Send (replyPacket);
     if (amountSent <= 0)
     {
-      fprintf(stderr, "Server(%ld): failed to transmit %d bytes, waiting for next transmit...\n", m_socket_id, remainingBytes);
+      // fprintf(stderr, "Server(%ld): failed to transmit %d bytes, waiting for next transmit...\n", m_socket_id, remainingBytes);
       // we will be called again, when new TX space becomes available;
       return;
     }

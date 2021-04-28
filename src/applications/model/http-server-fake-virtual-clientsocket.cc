@@ -41,12 +41,12 @@ void HttpServerFakeVirtualClientSocket::FinishedIncomingData(Ptr<Socket> socket,
   // now parse this request (TODO) and reply
   std::string filename = m_content_dir  + ParseHTTPHeader(data);
 
-  fprintf(stderr, "VirtualServer(%ld): Request Opening '%s'\n", m_socket_id, filename.c_str());
+  // fprintf(stderr, "VirtualServer(%ld): Request Opening '%s'\n", m_socket_id, filename.c_str());
 
   long filesize = GetFileSize(filename);
 
   if (filesize == -1) {
-    fprintf(stderr, "VirtualServer(%ld): Error, '%s' not found!\n", m_socket_id, filename.c_str());
+    // fprintf(stderr, "VirtualServer(%ld): Error, '%s' not found!\n", m_socket_id, filename.c_str());
     // return 404
     std::string replyString("HTTP/1.1 404 Not Found\r\n\r\n");
 
@@ -85,7 +85,7 @@ void HttpServerFakeVirtualClientSocket::FinishedIncomingData(Ptr<Socket> socket,
         cnt += 4096;
       }
     } else if (m_virtualHostedFiles.find(filename) != m_virtualHostedFiles.end()) {
-      fprintf(stderr, "VirtualServer(%ld): Opening file in memory with size %ld ...\n", m_socket_id, filesize);
+      // fprintf(stderr, "VirtualServer(%ld): Opening file in memory with size %ld ...\n", m_socket_id, filesize);
       // handle actual payload
 
       std::string bytes_memory = m_virtualHostedFiles[filename];
@@ -93,7 +93,7 @@ void HttpServerFakeVirtualClientSocket::FinishedIncomingData(Ptr<Socket> socket,
       AddBytesToTransmit((const uint8_t*)bytes_memory.c_str(),bytes_memory.length());
 
     } else {
-      fprintf(stderr, "VirtualServer(%ld): Opening file on disk with size %ld ...\n", m_socket_id, filesize);
+      // fprintf(stderr, "VirtualServer(%ld): Opening file on disk with size %ld ...\n", m_socket_id, filesize);
       // handle actual payload
       FILE* fp = fopen(filename.c_str(), "rb");
 

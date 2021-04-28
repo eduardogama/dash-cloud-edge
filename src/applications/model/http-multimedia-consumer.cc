@@ -235,7 +235,7 @@ void MultimediaConsumer<Parent>::OnFileReceived(unsigned status, unsigned length
 template<class Parent>
 void MultimediaConsumer<Parent>::OnMpdFile()
 {
-  fprintf(stderr, "Client(%d): On MPD File...\n", super::node_id);
+  // fprintf(stderr, "Client(%d): On MPD File...\n", super::node_id);
 
   // check if file was gziped, if not, we use it as is
   if (this->m_tempMpdFile.find(".gz") != std::string::npos)
@@ -474,11 +474,11 @@ void MultimediaConsumer<Parent>::OnMultimediaFile()
     if (m_initSegmentIsGlobal) {
       m_downloadedInitSegments.push_back("GlobalAdaptationSet");
       NS_LOG_DEBUG("Global Init Segment received");
-      cout << "Global Init Segment received" << '\n';
+      // cout << "Global Init Segment received" << '\n';
     } else {
       m_downloadedInitSegments.push_back(m_curRepId);
       NS_LOG_DEBUG("Init Segment received (rep=" << m_curRepId << ")");
-      cout << "Init Segment received (rep=" << m_curRepId << ")" << '\n';
+      // cout << "Init Segment received (rep=" << m_curRepId << ")" << '\n';
     }
     // getchar();
   } else {
@@ -487,7 +487,7 @@ void MultimediaConsumer<Parent>::OnMultimediaFile()
     //fprintf(stderr, "lastBitrate = %f\n", super::lastDownloadBitrate);
     mPlayer->SetLastDownloadBitRate(super::lastDownloadBitrate);
 
-    fprintf(stderr, "Last Download Speed = %f kBit/s\n", super::lastDownloadBitrate/1000.0);
+    // fprintf(stderr, "Last Download Speed = %f kBit/s\n", super::lastDownloadBitrate/1000.0);
 
     // check if there is enough space in buffer
     if(mPlayer->EnoughSpaceInBuffer(requestedSegmentNr, requestedRepresentation, m_isLayeredContent)) {
@@ -650,7 +650,7 @@ void MultimediaConsumer<Parent>::DownloadSegment()
   this->requestedSegmentNr = 0;
 
   this->requestedSegmentURL = this->mPlayer->GetAdaptationLogic()->GetNextSegment(&this->requestedSegmentNr, &this->requestedRepresentation, &this->m_hasDownloadedAllSegments);
-  fprintf(stderr, "Multimediaconsumer::Downloadsegment()\n");
+  // fprintf(stderr, "Multimediaconsumer::Downloadsegment()\n");
 
   if(this->m_hasDownloadedAllSegments) { // DONE
     NS_LOG_DEBUG("No more segments available for download!\n");
