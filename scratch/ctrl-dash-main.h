@@ -416,13 +416,13 @@ vector<int> DashController::FindCommonGroups (unsigned actualNode, unsigned next
 
 GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int content, unsigned userId)
 {
-	Ptr<Node> n = network->getClientContainers()->Get(userId);
-	Ptr<Ipv4> ipv4src = n->GetObject<Ipv4>();
+	Ptr<Node> user = network->getClientContainers()->Get(userId);
+	Ptr<Ipv4> ipv4src = user->GetObject<Ipv4>();
 
 	string str_ipv4src = Ipv4AddressToString(ipv4src->GetAddress(1,0).GetLocal());
 	string str_ipv4bst = Ipv4AddressToString(ipv4src->GetAddress(1,0).GetBroadcast());
 
-	EndUser *new_user = new EndUser(userId, str_ipv4src, content);
+	EndUser *new_user = new EndUser(user->GetId(), str_ipv4src, content);
 
 	vector<string> str_addr = str_split(str_ipv4bst, ".");
 	bool insert_group = false;
@@ -439,7 +439,7 @@ GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int conten
 
 		if (same_group /*and cont == it->getContent()*/) {
     	group->addUser(new_user);
-			(*serverTableList)[str_ipv4src] = group->getServerIp();
+			(*serverTableList)[str_ipv4bst] = group->getServerIp();
 			return group;
 		}
   }

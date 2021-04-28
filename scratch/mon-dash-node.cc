@@ -314,11 +314,14 @@ int main (int argc, char *argv[])
       ApplicationContainer clientApps;
       clientApps = player.Install(node_clients.Get(j));
 
+      string str_ipv4_client = Ipv4AddressToString(node_clients.Get(j)->GetObject<Ipv4>()->GetAddress(1,0).GetBroadcast());
       Ptr<Application> app = node_clients.Get(j)->GetApplication(0);
       app->GetObject<HttpClientDashApplication> ()->setServerTableList(&serverTableList);
 
-      string str_ipv4_client = Ipv4AddressToString(node_clients.Get(j)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
       serverTableList[str_ipv4_client] = str_ipv4_server;
+
+      cout << "user id=" << node_clients.Get(j)->GetId() << " user ip=" << str_ipv4_client
+      << " server=" << str_ipv4_server << " ap=" << ap.first << endl;
 
       startTime.push_back(t);
   	}

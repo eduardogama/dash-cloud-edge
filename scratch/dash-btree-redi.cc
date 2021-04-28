@@ -73,6 +73,9 @@ int main (int argc, char *argv[])
   NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath);
 
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
+  Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
+
+
 
   ReadTopology(scenarioFiles + "/btree_l3_link", scenarioFiles + "/btree_l3_nodes", network);
 
@@ -136,7 +139,7 @@ int main (int argc, char *argv[])
 
     string stripv4 = Ipv4AddressToString(srcipv4->GetAddress(same_bcst, 0).GetBroadcast());
     eCtrl.setLinkMap(stripv4, 0);
-    eCtrl.setLinkCapacityMap(stripv4, srcnode, dstnode, datarate);
+    eCtrl.setLinkCapacityMap(stripv4, srcnode, dstnode, datarate/1000000);
     eCtrl.createTroughputFile(stripv4, srcnode, dstnode);
 	}
 
@@ -308,12 +311,12 @@ int main (int argc, char *argv[])
   network.setClientContainers(&clients);
 
   Ptr<DashController> controller = CreateObject<DashController> ();
-  n_server->AddApplication(controller);
+  // n_server->AddApplication(controller);
 
   controller->Setup(&network, str_ipv4_server, Ipv4Address::GetAny (), 1317);
   controller->SetServerTableList(&serverTableList);
-  controller->SetStartTime(Seconds(0.0));
-  controller->SetStopTime(Seconds(stopTime));
+  // controller->SetStartTime(Seconds(0.0));
+  // controller->SetStopTime(Seconds(stopTime));
 
   eCtrl.setNodes(&nodes);
   eCtrl.setController(controller);
@@ -327,7 +330,8 @@ int main (int argc, char *argv[])
     int apId             = client.second.first;
     Ptr<Node> clientNode = client.second.second;
 
-    int final_client = 100 * apId + client.first;
+    int userId = client.first;
+    int final_client = 100 * apId + userId;
 
     int screenWidth = 1920;
     int screenHeight = 1080;
@@ -362,7 +366,7 @@ int main (int argc, char *argv[])
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
     serverTableList[str_ipv4_client] = str_ipv4_server;
 
-    Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, clientNode->GetId());
+    Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, userId);
   }
 
   Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
