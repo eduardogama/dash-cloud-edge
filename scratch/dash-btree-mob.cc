@@ -35,7 +35,7 @@
 using namespace ns3;
 
 
-NS_LOG_COMPONENT_DEFINE ("DashBTreeRedirect");
+NS_LOG_COMPONENT_DEFINE ("DashBTreeBMobility");
 
 int main (int argc, char *argv[])
 {
@@ -70,11 +70,10 @@ int main (int argc, char *argv[])
   string dir = CreateDir("../dash-multi-layer-" + to_string(seed));
 
   string filePath = dir + "/Troughput_" + to_string(seed) + "_";
-  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, true);
+  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath);
 
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
   Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
-
 
 
   ReadTopology(scenarioFiles + "/btree_l3_link", scenarioFiles + "/btree_l3_nodes", network);
@@ -82,10 +81,8 @@ int main (int argc, char *argv[])
 	NS_LOG_INFO ("Create Nodes");
 
 	NodeContainer nodes; // Declare nodes objects
-  // NodeContainer cache_nodes;
 
   nodes.Create(network.getNodes().size());
-  // cache_nodes.Create(network.getNodes().size());
 
 	cout << "Node size = " << network.getNodes().size() << endl;
 	for (unsigned int i = 0; i < network.getNodes().size(); i += 1) {
@@ -285,14 +282,7 @@ int main (int argc, char *argv[])
 	string representationStrings = GetCurrentWorkingDir() + "/../content/representations/netflix_vid1.csv";
 	fprintf(stderr, "representations = %s\n", representationStrings.c_str ());
 
-	string str_ipv4_server = Ipv4AddressToString(n_server->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
-
-  // DASHServerHelper server(Ipv4Address::GetAny (), 80, str_ipv4_server,
-  //                         "/content/mpds/", representationStrings, "/content/segments/");
-  //
-  // ApplicationContainer serverApps = server.Install(n_server);
-	// serverApps.Start (Seconds(0.0));
-	// serverApps.Stop (Seconds(stopTime));
+	string strIpv4Server = Ipv4AddressToString(n_server->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
   for (size_t i = 0; i < nodes.GetN(); i++) {
     Ptr<Node> edgeServer = nodes.Get(i);
@@ -311,18 +301,20 @@ int main (int argc, char *argv[])
   network.setClientContainers(&clients);
 
   Ptr<DashController> controller = CreateObject<DashController> ();
-  // n_server->AddApplication(controller);
 
-  controller->Setup(&network, str_ipv4_server, Ipv4Address::GetAny (), 1317);
+  controller->Setup(&network, strIpv4Server, Ipv4Address::GetAny (), 1317);
   controller->SetServerTableList(&serverTableList);
-  // controller->SetStartTime(Seconds(0.0));
-  // controller->SetStopTime(Seconds(stopTime));
 
   eCtrl.setNodes(&nodes);
   eCtrl.setController(controller);
 	//=======================================================================================
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables();
+
+  ofstream fileMobility;
+  fileMobility.open("UsersConnection", ios::out);
+  ofstream fileUserArrive;
+  fileUserArrive.open("UserArrive", ios::out);
 
   for (auto& client : m_clients) {
     double start = poisson();
@@ -337,7 +329,7 @@ int main (int argc, char *argv[])
     int screenHeight = 1080;
 
     stringstream mpd_baseurl;
-    mpd_baseurl << "http://" << str_ipv4_server << "/content/mpds/";
+    mpd_baseurl << "http://" << strIpv4Server << "/content/mpds/";
 
     stringstream ssMPDURL;
     ssMPDURL << mpd_baseurl.str() << "vid" << 1 << ".mpd.gz";
@@ -357,33 +349,42 @@ int main (int argc, char *argv[])
     clientApps.Start(Seconds(start));
     clientApps.Stop(Seconds(stopTime));
 
-    string str_ipv4_client = Ipv4AddressToString(clientNode->GetObject<Ipv4>()->GetAddress(1,0).GetBroadcast());
+    string strIpv4Lcl = Ipv4AddressToString(clientNode->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+    string strIpv4Bst = Ipv4AddressToString(clientNode->GetObject<Ipv4>()->GetAddress(1,0).GetBroadcast());
 
-    cout << "user id=" << clientNode->GetId() << " user ip=" << str_ipv4_client
-    << " server=" << str_ipv4_server << " ap=" << apId << endl;
+    fileUserArrive << start << " user id=" << clientNode->GetId() << " user ip=" << strIpv4Bst
+    << " server=" << strIpv4Server << " ap=" << apId << endl;
 
     Ptr<Application> app = clientNode->GetApplication(0);
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
-    serverTableList[str_ipv4_client] = str_ipv4_server;
+    serverTableList[strIpv4Bst] = strIpv4Server;
+
+    fileMobility << clientNode->GetId() << " " << final_client << " " <<  apId
+                 << " " << strIpv4Lcl << " " << strIpv4Server << endl;
 
     Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, userId);
   }
+  fileMobility.flush();
+  fileMobility.close();
+  fileUserArrive.flush();
+  fileUserArrive.close();
 
-  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+
+  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
 
   Simulator::Schedule(Seconds(0), &NodeStatistics::CalculateThroughput, &eCtrl);

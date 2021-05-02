@@ -15,7 +15,7 @@ using namespace std;
 class NodeStatistics
 {
 public:
-  NodeStatistics(NetworkTopology *network, double stepsTime=0.1, string pathFile="../Troughput_");
+  NodeStatistics(NetworkTopology *network, double stepsTime=0.1, string pathFile="../Troughput_", bool toRedirect=false);
 
   void CheckStatistics (double time);
 
@@ -49,14 +49,15 @@ private:
 
   map<string, string> troughputFile;
 
+  bool toRedirect;
   double stepsTime;
   string pathFile;
 
   NodeContainer *nodes;
 };
 
-NodeStatistics::NodeStatistics (NetworkTopology *network, double stepsTime, string pathFile)
-  : network(network), stepsTime(stepsTime), pathFile(pathFile)
+NodeStatistics::NodeStatistics (NetworkTopology *network, double stepsTime, string pathFile, bool toRedirect)
+  : network(network), stepsTime(stepsTime), pathFile(pathFile), toRedirect(toRedirect)
 {
   // system(string(string("mkdir -p troughput")).c_str());
 }
@@ -161,11 +162,13 @@ void NodeStatistics::CalculateThroughput()
     storeTroughputInFile(iplink, mbs);
     setLinkMap(iplink, 0);
 
-    if (mbs > this->linkCapacityMap[iplink]) {
+    if (mbs > this->linkCapacityMap[iplink] && toRedirect) {
     // if (mbs > 5) {
       int actualNode = this->linkNodesMap[iplink].first;
       int nextNode   = this->linkNodesMap[iplink].second;
 
+      // std::cout << "Troughput "<< mbs << " > 5 =======" << '\n';
+      // std::cout << iplink << "=" << actualNode << "," << nextNode << '\n';
       this->controller->RedirectUsers(actualNode, nextNode);
     }
   }

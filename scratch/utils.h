@@ -124,7 +124,7 @@ bool ReadTopology(string linksFile, string nodesFile, NetworkTopology &net)
 	links_file.close();
 
 	// node data
-    int id;
+  int id;
 	string type;
 
 

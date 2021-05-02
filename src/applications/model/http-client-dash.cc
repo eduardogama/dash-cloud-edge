@@ -8,6 +8,7 @@
 
 #include "http-client-dash.h"
 
+#include <fstream>
 
 
 namespace ns3 {
@@ -202,11 +203,10 @@ void HttpClientDashApplication::ConnectionClosedNormal (Ptr<Socket> socket)
 
 void HttpClientDashApplication::ConnectionClosedError (Ptr<Socket> socket)
 {
-  if (socket == 0) {
-    return;
+  if (socket != 0) {
+    fprintf(stderr,"Client(%d): Socket was closed with an error, errno=%d; Trying to open it again...\n", node_id, socket->GetErrno());
+    socket->SetCloseCallbacks(MakeNullCallback<void, Ptr<Socket> > (),MakeNullCallback<void, Ptr<Socket> > ());
   }
-  fprintf(stderr,"Client(%d): Socket was closed with an error, errno=%d; Trying to open it again...\n", node_id, socket->GetErrno());
-  socket->SetCloseCallbacks(MakeNullCallback<void, Ptr<Socket> > (),MakeNullCallback<void, Ptr<Socket> > ());
 
   // let's try opening the second again again in 0.5 second
   Simulator::Schedule(Seconds(0.5), &HttpClientDashApplication::TryEstablishConnection, this);
@@ -221,6 +221,34 @@ void HttpClientDashApplication::OnReadySend (Ptr<Socket> localSocket, uint32_t t
   }
 }
 
+bool HttpClientDashApplication::endsWith(const std::string& s, const std::string& suffix)
+{
+    return s.size() >= suffix.size() &&
+           s.substr(s.size() - suffix.size()) == suffix;
+}
+
+vector<string> HttpClientDashApplication::split(const string& s, const string& delimiter)
+{
+  const bool& removeEmptyEntries = false;
+  vector<string> tokens;
+
+  for (size_t start = 0, end; start < s.length(); start = end + delimiter.length()) {
+     size_t position = s.find(delimiter, start);
+     end = position != string::npos ? position : s.length();
+
+     string token = s.substr(start, end - start);
+     if (!removeEmptyEntries || !token.empty()) {
+       tokens.push_back(token);
+     }
+  }
+
+  if (!removeEmptyEntries && (s.empty() || endsWith(s, delimiter))) {
+    tokens.push_back("");
+  }
+
+  return tokens;
+}
+
 void HttpClientDashApplication::DoSendGetRequest (Ptr<Socket> localSocket, uint32_t txSpace)
 {
   NS_LOG_FUNCTION (this);
@@ -228,11 +256,38 @@ void HttpClientDashApplication::DoSendGetRequest (Ptr<Socket> localSocket, uint3
   string hostname = getServerTableList(strNodeIpv4);
   if (m_hostName != hostname ) {
     fprintf(stderr, "Client(%d,%s): Old Hostname = %s new Hostname = %s\n", node_id, strNodeIpv4.c_str(), m_hostName.c_str(), hostname.c_str());
+
+    stringstream ssValue;
+    ifstream inputFile("UsersConnection");
+
+    string line;
+		while (getline(inputFile, line)) {
+      vector<string> values = split(line, " ");
+      string strNodeId = to_string(node_id);
+
+      if(strNodeId == values[0]) {
+        ssValue << values[0] << " " << values[1] << " " <<  values[2] << " " << values[3] << " " << hostname << endl;
+      } else {
+        ssValue << values[0] << " " << values[1] << " " <<  values[2] << " " << values[3] << " " << values[4] << endl;
+      }
+		}
+    inputFile.close();
+
+    ofstream newOutputFile;
+    newOutputFile.open("UsersConnection", ios::out);
+    newOutputFile << ssValue.str();
+    newOutputFile.flush();
+  	newOutputFile.close();
+
+    // for (auto& server : *serverTableList) {
+    //   std::cout << server.first << " " << server.second << '\n';
+    // }
     // getchar();
 
     m_hostName = hostname;
     SetRemote(Ipv4Address(m_hostName.c_str()),80);
     SetAttribute("KeepAlive", StringValue("false"));
+
   } else {
     SetAttribute("KeepAlive", StringValue("true"));
   }
@@ -455,6 +510,16 @@ void HttpClientDashApplication::OnFileReceived(unsigned status, unsigned length)
   lastDownloadBitrate = downloadSpeed * 8.0; // do not forget to do *8, as this is a BIT-rate
 
   m_downloadFinishedTrace(this, this->m_fileToRequest, downloadSpeed, milliSeconds);
+}
+
+void HttpClientDashApplication::setServerTableList (std::map<std::string, std::string> *serverTableList)
+{
+  this->serverTableList = serverTableList;
+}
+
+string HttpClientDashApplication::getServerTableList (std::string server)
+{
+  return (*serverTableList)[server];
 }
 
 void HttpClientDashApplication::SetRemote (Address ip, uint16_t port)

@@ -37,8 +37,6 @@ class NetworkTopology
 		unsigned CapacityLink(unsigned actualPos, unsigned nextPos);
 		void ResetCapacityLink(unsigned actualPos, unsigned nextPos);
 
-		string getServerIp(unsigned actualPos, unsigned nextPos);
-
 		void SetUpAdjList();
 		void printAdjList();
 
@@ -47,7 +45,6 @@ class NetworkTopology
 
 		void setNodeContainers(NodeContainer *nodeContainers);
 		NodeContainer *getNodeContainers(void);
-
 	private:
 		bool dijkstra(unsigned s, unsigned t);
 
@@ -95,11 +92,6 @@ vector<_Link *> NetworkTopology::getLinks(void)
 vector<_Node *> NetworkTopology::getNodes(void)
 {
 	return this->nodes;
-}
-
-bool NetworkTopology::SearchRoute(unsigned s, unsigned t)
-{
-	return dijkstra(s,t);
 }
 
 bool NetworkTopology::canAlloc(int actualPos, int nextPos)
@@ -157,11 +149,6 @@ void NetworkTopology::ResetCapacityLink(unsigned actualPos, unsigned nextPos)
 	matrixAllocation[actualPos*size + nextPos] = 0;
 }
 
-string NetworkTopology::getServerIp(unsigned actualPos, unsigned nextPos)
-{
-	return "";
-}
-
 void NetworkTopology::SetUpAdjList()
 {
 	// resize the vector to N elements of type vector<int>
@@ -216,6 +203,11 @@ NodeContainer *NetworkTopology::getNodeContainers(void)
 Path NetworkTopology::getRoute()
 {
 	return this->route;
+}
+
+bool NetworkTopology::SearchRoute(unsigned s, unsigned t)
+{
+	return dijkstra(s,t);
 }
 
 bool NetworkTopology::dijkstra(unsigned s, unsigned t)

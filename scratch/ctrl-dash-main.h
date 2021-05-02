@@ -55,6 +55,7 @@ public:
 	void onAddContainer(unsigned from, unsigned to, int content, int userId);
 
 	GroupUser* AddUserInGroup (unsigned from, unsigned to, int content, unsigned userId);
+	void printGroups();
 
 private:
   virtual void StartApplication (void);
@@ -294,44 +295,6 @@ void DashController::onAddContainer(unsigned from, unsigned to, int content, int
 	DashController::setSendRedirect(true);
 }
 
-void DashController::RedirectUsers(unsigned actualNode, unsigned nextNode)
-{
-	vector<int> groups_i;
-
-	for (unsigned i = 0; i < this->groups.size(); i++) {
-		Path path = this->groups[i]->getRoute();
-		path.goStart();
-		while (!path.isEndPath()) {
-			if (path.getActualStep() == actualNode && path.getNextStep() == nextNode) {
-				groups_i.push_back(i);
-			}
-			path.goAhead();
-		}
-	}
-
-	for (auto& g_i : groups_i) {
-		network->SearchRoute(nextNode, groups[g_i]->getFrom());
-
-		// std::cout << "groups(" << groups[g_i]->getId() << ") = " << network->getRoute() << '\n';
-		// getchar();
-		string newServerIp = getInterfaceNode(nextNode);
-
-		groups[g_i]->setRoute(network->getRoute());
-		groups[g_i]->setActualNode(actualNode);
-		groups[g_i]->setServerIp(newServerIp);
-
-		(*serverTableList)[groups[g_i]->getId()] = newServerIp;
-	}
-}
-
-string DashController::getInterfaceNode(int node)
-{
-	Ptr<Node> nodesrc = network->getNodeContainers()->Get(node);
-	Ptr<Ipv4> srcIpv4 = nodesrc->GetObject<Ipv4> ();
-
-	return Ipv4AddressToString(srcIpv4->GetAddress(1, 0).GetLocal());
-}
-
 void DashController::ResourceAllocation (vector<int>& free_groups)
 {
 	for (size_t i = 0; i < free_groups.size(); i++) {
@@ -419,38 +382,68 @@ GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int conten
 	Ptr<Node> user = network->getClientContainers()->Get(userId);
 	Ptr<Ipv4> ipv4src = user->GetObject<Ipv4>();
 
-	string str_ipv4src = Ipv4AddressToString(ipv4src->GetAddress(1,0).GetLocal());
-	string str_ipv4bst = Ipv4AddressToString(ipv4src->GetAddress(1,0).GetBroadcast());
+	string strIpv4Src = Ipv4AddressToString(ipv4src->GetAddress(1,0).GetLocal());
+	string strIpv4Bst = Ipv4AddressToString(ipv4src->GetAddress(1,0).GetBroadcast());
 
-	EndUser *new_user = new EndUser(user->GetId(), str_ipv4src, content);
+	EndUser *new_user = new EndUser(user->GetId(), strIpv4Src, content);
 
-	vector<string> str_addr = str_split(str_ipv4bst, ".");
-	bool insert_group = false;
+	bool insertGroup = false;
   for (auto& group : groups) {
-    vector<string> group_addr = str_split(group->getId(), ".");
+    string strGroupAddr = group->getId();
 
-		bool same_group = true;
-		for (unsigned i = 0; i < str_addr.size(); i++) {
-			if (group_addr[i] != str_addr[i]) {
-				same_group = false;
-				break;
-			}
-		}
-
-		if (same_group /*and cont == it->getContent()*/) {
+		if (strIpv4Bst == strGroupAddr /*and cont == it->getContent()*/) {
     	group->addUser(new_user);
-			(*serverTableList)[str_ipv4bst] = group->getServerIp();
 			return group;
 		}
   }
 
-  if (!insert_group) {
-		network->SearchRoute(to, from);
-		groups.push_back(new GroupUser(str_ipv4bst, m_serverIp, from, to, network->getRoute(), new_user));
+	network->SearchRoute(to, from); // From Dst (7) to Ap (3,4,5,6)
+
+  if (!insertGroup) {
+		string serverIpv4 = (*serverTableList)[strIpv4Bst];
+		groups.push_back(new GroupUser(strIpv4Bst, serverIpv4, from, to, network->getRoute(), new_user));
 	}
 
-
 	return groups[groups.size() - 1];
+}
+
+void DashController::RedirectUsers(unsigned actualNode, unsigned nextNode)
+{
+	vector<int> groups_i;
+	for (unsigned i = 0; i < this->groups.size(); i++) {
+		Path path = this->groups[i]->getRoute();
+		path.goStart();
+		while (!path.isEndPath()) {
+			if (path.getActualStep() == actualNode && path.getNextStep() == nextNode) {
+				groups_i.push_back(i);
+				break;
+			}
+			path.goAhead();
+		}
+	}
+
+	for (auto& g_i : groups_i) {
+		network->SearchRoute(nextNode, groups[g_i]->getFrom());
+
+		std::cout << "groups(" << groups[g_i]->getId() << ") = Old" << groups[g_i]->getRoute() << '\n';
+		string newServerIp = getInterfaceNode(nextNode);
+
+		groups[g_i]->setRoute(network->getRoute());
+		groups[g_i]->setActualNode(nextNode);
+		groups[g_i]->setServerIp(newServerIp);
+
+		(*serverTableList)[groups[g_i]->getId()] = newServerIp;
+	}
+
+	printGroups();
+}
+
+string DashController::getInterfaceNode(int node)
+{
+	Ptr<Node> nodesrc = network->getNodeContainers()->Get(node);
+	Ptr<Ipv4> srcIpv4 = nodesrc->GetObject<Ipv4> ();
+
+	return Ipv4AddressToString(srcIpv4->GetAddress(1, 0).GetLocal());
 }
 
 string DashController::getInterfaceNode(int actualNode, int nextNode)
@@ -459,6 +452,14 @@ string DashController::getInterfaceNode(int actualNode, int nextNode)
 	Ptr<Ipv4> src_ip = nodesrc->GetObject<Ipv4> ();
 
 	return Ipv4AddressToString(src_ip->GetAddress(1, 0).GetLocal());
+}
+
+void DashController::printGroups()
+{
+	for (size_t i = 0; i < this->groups.size(); i++) {
+		std::cout << "Id=" << this->groups[i]->getId() << " Server=" << this->groups[i]->getServerIp();
+		std::cout << " " << this->groups[i]->getRoute() << '\n';
+	}
 }
 
 void DashController::StartApplication (void)

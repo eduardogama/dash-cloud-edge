@@ -443,7 +443,6 @@ void DASHFakeServerApplication::DoFinishSocket(uint64_t socket_id)
 uint64_t DASHFakeServerApplication::RegisterSocket (Ptr<Socket> socket)
 {
   this->m_activeSockets[socket] = this->m_lastSocketID;
-
   return this->m_lastSocketID++;
 }
 

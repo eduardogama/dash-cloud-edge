@@ -57,13 +57,8 @@ public:
   HttpClientDashApplication();
   virtual ~HttpClientDashApplication();
 
-  void setServerTableList (std::map<std::string, std::string> *serverTableList) {
-    this->serverTableList = serverTableList;
-  }
-
-  string getServerTableList (std::string server) {
-    return (*serverTableList)[server];
-  }
+  void setServerTableList (std::map<std::string, std::string> *serverTableList);
+  string getServerTableList (std::string server);
 
 protected:
 
@@ -103,6 +98,8 @@ protected:
 
   virtual void OnFileReceived(unsigned status, unsigned length);
 
+  bool endsWith(const std::string& s, const std::string& suffix);
+  vector<string> split(const string& s, const string& delimiter);
 
   //=======================================================================================
   // PARALLEL CONNECTION WITH AGGREGATOR AGENT
@@ -135,6 +132,8 @@ private:
   void HandleRead (Ptr<Socket> socket);
 
   uint32_t ParseResponseHeader (const uint8_t* buffer, size_t len, int* statusCode, unsigned int* contentLength);
+
+
 
 protected:
 

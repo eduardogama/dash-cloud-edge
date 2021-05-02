@@ -122,8 +122,34 @@ void MultimediaConsumer<Parent>::StartApplication() // Called at time specified 
     string new_url = m_mpdUrl.substr(7);
     int pos = new_url.find("/");
 
+    string hostname = new_url.substr(0,pos);
     super::m_hostName = super::getServerTableList(super::strNodeIpv4);
+
     fprintf(stderr, "Client(%d,%s): Hostname = %s\n", super::node_id, super::strNodeIpv4.c_str(), super::m_hostName.c_str());
+    fprintf(stderr, "Client(%d,%s): Old Hostname = %s new Hostname = %s\n", super::node_id, super::strNodeIpv4.c_str(), hostname.c_str(), super::m_hostName.c_str());
+    if (super::m_hostName != hostname) {
+      stringstream ssValue;
+      ifstream inputFile("UsersConnection");
+
+      string line;
+      while (getline(inputFile, line)) {
+        vector<string> values = super::split(line, " ");
+        string strNodeId = to_string(super::node_id);
+
+        if(strNodeId == values[0]) {
+          ssValue << values[0] << " " << values[1] << " " <<  values[2] << " " << values[3] << " " << super::m_hostName << endl;
+        } else {
+          ssValue << values[0] << " " << values[1] << " " <<  values[2] << " " << values[3] << " " << values[4] << endl;
+        }
+      }
+      inputFile.close();
+
+      ofstream newOutputFile;
+      newOutputFile.open("UsersConnection", ios::out);
+      newOutputFile << ssValue.str();
+      newOutputFile.flush();
+      newOutputFile.close();
+    }
 
     super::SetRemote(Ipv4Address(super::m_hostName.c_str()),80);
     mpd_request_name = new_url.substr(pos+1);

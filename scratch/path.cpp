@@ -63,7 +63,7 @@ std::ostream &operator<<(std::ostream &os, const Path &path)
     }
     os << "Path: ";
     for ( int i = 0 ; i < l - 1 ; i++,p.goAhead())
-        os << p.getActualStep() << " -> ";
+        os << p.getActualStep() << "->";
     os << p.getTo();
     return os;
 }
