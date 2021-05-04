@@ -203,10 +203,11 @@ void HttpClientDashApplication::ConnectionClosedNormal (Ptr<Socket> socket)
 
 void HttpClientDashApplication::ConnectionClosedError (Ptr<Socket> socket)
 {
-  if (socket != 0) {
-    fprintf(stderr,"Client(%d): Socket was closed with an error, errno=%d; Trying to open it again...\n", node_id, socket->GetErrno());
-    socket->SetCloseCallbacks(MakeNullCallback<void, Ptr<Socket> > (),MakeNullCallback<void, Ptr<Socket> > ());
+  if (socket == 0) {
+    return;
   }
+  fprintf(stderr,"Client(%d): Socket was closed with an error, errno=%d; Trying to open it again...\n", node_id, socket->GetErrno());
+  socket->SetCloseCallbacks(MakeNullCallback<void, Ptr<Socket> > (),MakeNullCallback<void, Ptr<Socket> > ());
 
   // let's try opening the second again again in 0.5 second
   Simulator::Schedule(Seconds(0.5), &HttpClientDashApplication::TryEstablishConnection, this);
@@ -278,11 +279,6 @@ void HttpClientDashApplication::DoSendGetRequest (Ptr<Socket> localSocket, uint3
     newOutputFile << ssValue.str();
     newOutputFile.flush();
   	newOutputFile.close();
-
-    // for (auto& server : *serverTableList) {
-    //   std::cout << server.first << " " << server.second << '\n';
-    // }
-    // getchar();
 
     m_hostName = hostname;
     SetRemote(Ipv4Address(m_hostName.c_str()),80);
@@ -418,9 +414,12 @@ void HttpClientDashApplication::HandleRead (Ptr<Socket> socket)
 
 uint32_t HttpClientDashApplication::ParseResponseHeader(const uint8_t* buffer, size_t len, int* realStatusCode, unsigned int* contentLength)
 {
-  /*HTTP/1.1 200 OKCRLF
+  /*
+    HTTP/1.1 200 OKCRLF
     Content-Type: text/xml; charset=utf-8CRLF
-    Content-Length: {len}CRLFCRLF;*/
+    Content-Length: {len}CRLFCRLF;
+  */
+
   fprintf(stderr, "Client(%d): Parsing Response Header of length %ld\n", node_id, len);
   const char* strbuffer = (const char*) buffer;
 

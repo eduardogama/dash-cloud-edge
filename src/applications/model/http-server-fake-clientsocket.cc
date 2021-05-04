@@ -124,29 +124,31 @@ HttpServerFakeClientSocket::ParseHTTPHeader(std::string data)
 
 void HttpServerFakeClientSocket::ConnectionClosedNormal(Ptr<Socket> socket)
 {
-  if (socket != 0) {
-    fprintf(stderr, "Server(%ld): Connection closing normally...\n", m_socket_id);
-    // just in case, make sure the callbacks are no longer active
-
-    // remove the send callback
-    socket->SetSendCallback (MakeNullCallback<void, Ptr<Socket>, uint32_t > ());
-    // remove the recv callback
-    socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
+  if (socket == 0) {
+    return;
   }
+  fprintf(stderr, "Server(%ld): Connection closing normally...\n", m_socket_id);
+  // just in case, make sure the callbacks are no longer active
+
+  // remove the send callback
+  socket->SetSendCallback (MakeNullCallback<void, Ptr<Socket>, uint32_t > ());
+  // remove the recv callback
+  socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
   this->m_finished_callback(this->m_socket_id);
 }
 
 void HttpServerFakeClientSocket::ConnectionClosedError(Ptr<Socket> socket)
 {
-  if (socket != 0) {
-    fprintf(stderr, "Server(%ld): Connection closing with error...\n", m_socket_id);
-    // just in case, make sure the callbacks are no longer active
-
-    // remove the send callback
-    socket->SetSendCallback (MakeNullCallback<void, Ptr<Socket>, uint32_t > ());
-    // remove the recv callback
-    socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
+  if (socket == 0) {
+    return;
   }
+  fprintf(stderr, "Server(%ld): Connection closing with error...\n", m_socket_id);
+  // just in case, make sure the callbacks are no longer active
+
+  // remove the send callback
+  socket->SetSendCallback (MakeNullCallback<void, Ptr<Socket>, uint32_t > ());
+  // remove the recv callback
+  socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
 
   this->m_finished_callback(this->m_socket_id);
 }

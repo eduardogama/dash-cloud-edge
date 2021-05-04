@@ -121,12 +121,11 @@ void MultimediaConsumer<Parent>::StartApplication() // Called at time specified 
   if (m_mpdUrl.find(delim) == 0) {
     string new_url = m_mpdUrl.substr(7);
     int pos = new_url.find("/");
-
+    
     string hostname = new_url.substr(0,pos);
     super::m_hostName = super::getServerTableList(super::strNodeIpv4);
-
-    fprintf(stderr, "Client(%d,%s): Hostname = %s\n", super::node_id, super::strNodeIpv4.c_str(), super::m_hostName.c_str());
     fprintf(stderr, "Client(%d,%s): Old Hostname = %s new Hostname = %s\n", super::node_id, super::strNodeIpv4.c_str(), hostname.c_str(), super::m_hostName.c_str());
+
     if (super::m_hostName != hostname) {
       stringstream ssValue;
       ifstream inputFile("UsersConnection");
