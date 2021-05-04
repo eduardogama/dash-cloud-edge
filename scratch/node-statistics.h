@@ -162,7 +162,7 @@ void NodeStatistics::CalculateThroughput()
     storeTroughputInFile(iplink, mbs);
     setLinkMap(iplink, 0);
 
-    if (mbs > this->linkCapacityMap[iplink] && toRedirect) {
+    if ((mbs > this->linkCapacityMap[iplink]) && toRedirect) {
     // if (mbs > 5) {
       int actualNode = this->linkNodesMap[iplink].first;
       int nextNode   = this->linkNodesMap[iplink].second;

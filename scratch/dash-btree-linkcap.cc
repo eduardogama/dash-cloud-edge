@@ -44,8 +44,6 @@ int main (int argc, char *argv[])
 	unsigned n_ap = 0, n_clients = 1;
   int dst_server = 7;
 
-  //Register packet receptions to calculate throughput
-  NodeStatistics eCtrl = NodeStatistics(&network, 2, "./");
 
 	string scenarioFiles = GetCurrentWorkingDir() + "/../content/scenario";
 	string requestsFile = "requests";
@@ -68,7 +66,14 @@ int main (int argc, char *argv[])
 
 	cmd.Parse (argc, argv);
 
+  string dir = CreateDir("../DashBTreeLinkCapacity-Seed" + to_string(seed));
+  string filePath = dir + "/Troughput_" + to_string(seed) + "_";
+
+  //Register packet receptions to calculate throughput
+  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath);
+
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
+  Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
 
   ReadTopology(scenarioFiles + "/btree_l3_link", scenarioFiles + "/btree_l3_nodes", network);
 
@@ -392,7 +397,6 @@ int main (int argc, char *argv[])
 
 
 	// %%%%%%%%%%%% sort out the simulation
-	string dir = CreateDir("../dash-multi-layer");
 	AnimationInterface anim(dir + string("/topology.netanim"));
 
 	DASHPlayerTracer::InstallAll(dir + string("/topology-") + to_string(seed) + string(".csv"));
