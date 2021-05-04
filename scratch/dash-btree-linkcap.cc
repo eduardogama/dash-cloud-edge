@@ -141,16 +141,6 @@ int main (int argc, char *argv[])
     eCtrl.createTroughputFile(stripv4, srcnode, dstnode);
 	}
 
-  // p2p.SetDeviceAttribute ("DataRate", StringValue ("500Mb/s")); // This must not be more than the maximum throughput in 802.11n
-  // for (size_t i = 0; i < network.getNodes().size(); i++) {
-  //   NetDeviceContainer deviceContainer;
-  //   deviceContainer = p2p.Install (nodes.Get(i), cache_nodes.Get(i));
-  //
-  //   address.Assign(deviceContainer);
-  //   address.NewNetwork();
-  //   netDevices.push_back(deviceContainer);
-  // }
-
 	//Store IP adresses
 	std::string addr_file = "addresses";
 	ofstream out_addr_file(addr_file.c_str());
@@ -295,36 +285,24 @@ int main (int argc, char *argv[])
 
 	string str_ipv4_server = Ipv4AddressToString(n_server->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
-  // DASHServerHelper server(Ipv4Address::GetAny (), 80, str_ipv4_server,
-  //                         "/content/mpds/", representationStrings, "/content/segments/");
-  //
-  // ApplicationContainer serverApps = server.Install(n_server);
-	// serverApps.Start (Seconds(0.0));
-	// serverApps.Stop (Seconds(stopTime));
+  DASHServerHelper server(Ipv4Address::GetAny (), 80, str_ipv4_server,
+                          "/content/mpds/", representationStrings, "/content/segments/");
 
-  for (size_t i = 0; i < nodes.GetN(); i++) {
-    Ptr<Node> edgeServer = nodes.Get(i);
-    string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
-
-    DASHServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
-                            "/content/mpds/", representationStrings, "/content/segments/");
-
-    ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
-    serverApps.Start (Seconds(0.0));
-    serverApps.Stop (Seconds(stopTime));
-  }
+  ApplicationContainer serverApps = server.Install(n_server);
+	serverApps.Start (Seconds(0.0));
+	serverApps.Stop (Seconds(stopTime));
 
   //=======================================================================================
   network.setNodeContainers(&nodes);
   network.setClientContainers(&clients);
 
   Ptr<DashController> controller = CreateObject<DashController> ();
-  n_server->AddApplication(controller);
+  // n_server->AddApplication(controller);
 
   controller->Setup(&network, str_ipv4_server, Ipv4Address::GetAny (), 1317);
   controller->SetServerTableList(&serverTableList);
-  controller->SetStartTime(Seconds(0.0));
-  controller->SetStopTime(Seconds(stopTime));
+  // controller->SetStartTime(Seconds(0.0));
+  // controller->SetStopTime(Seconds(stopTime));
 
   eCtrl.setNodes(&nodes);
   eCtrl.setController(controller);
@@ -366,15 +344,16 @@ int main (int argc, char *argv[])
 
     string str_ipv4_client = Ipv4AddressToString(clientNode->GetObject<Ipv4>()->GetAddress(1,0).GetBroadcast());
 
-    cout << "user id=" << clientNode->GetId() << " user ip=" << str_ipv4_client
-    << " server=" << str_ipv4_server << " ap=" << apId << endl;
+    cout << "user id=" << clientNode->GetId() << " user ip=" << str_ipv4_client << " server=" << str_ipv4_server << " ap=" << apId << endl;
 
     Ptr<Application> app = clientNode->GetApplication(0);
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
     serverTableList[str_ipv4_client] = str_ipv4_server;
 
-    Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, clientNode->GetId());
+    // Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, clientNode->GetId());
   }
+  Simulator::Schedule(Seconds(0), &NodeStatistics::CalculateThroughput, &eCtrl);
+
 
   Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
@@ -393,11 +372,8 @@ int main (int argc, char *argv[])
   Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
 
-  Simulator::Schedule(Seconds(0), &NodeStatistics::CalculateThroughput, &eCtrl);
-
-
 	// %%%%%%%%%%%% sort out the simulation
-	AnimationInterface anim(dir + string("/topology.netanim"));
+	// AnimationInterface anim(dir + string("/topology.netanim"));
 
 	DASHPlayerTracer::InstallAll(dir + string("/topology-") + to_string(seed) + string(".csv"));
 

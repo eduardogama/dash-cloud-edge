@@ -388,7 +388,7 @@ int main (int argc, char *argv[])
 
 
 	// %%%%%%%%%%%% sort out the simulation
-	AnimationInterface anim(dir + string("/topology.netanim"));
+	// AnimationInterface anim(dir + string("/topology.netanim"));
 
 	DASHPlayerTracer::InstallAll(dir + string("/topology-") + to_string(seed) + string(".csv"));
 

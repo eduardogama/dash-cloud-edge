@@ -418,12 +418,9 @@ void HttpClientDashApplication::HandleRead (Ptr<Socket> socket)
 
 uint32_t HttpClientDashApplication::ParseResponseHeader(const uint8_t* buffer, size_t len, int* realStatusCode, unsigned int* contentLength)
 {
-  /*
-    HTTP/1.1 200 OKCRLF
+  /*HTTP/1.1 200 OKCRLF
     Content-Type: text/xml; charset=utf-8CRLF
-    Content-Length: {len}CRLFCRLF;
-  */
-
+    Content-Length: {len}CRLFCRLF;*/
   fprintf(stderr, "Client(%d): Parsing Response Header of length %ld\n", node_id, len);
   const char* strbuffer = (const char*) buffer;
 
@@ -545,7 +542,7 @@ void HttpClientDashApplication::SetRemote (Ipv6Address ip, uint16_t port)
 
 void HttpClientDashApplication::ForceCloseSocket()
 {
-  if (m_socket != 0 && m_keepAlive) {
+  if ((m_socket != 0) && m_keepAlive) {
     m_socket->Close();
   }
 

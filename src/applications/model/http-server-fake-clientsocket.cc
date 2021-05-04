@@ -111,7 +111,6 @@ HttpServerFakeClientSocket::ParseHTTPHeader(std::string data)
 
   std::string sFilename(actualFileName);
 
-
   // check if keep-alive is set
   if (data.find("Connection: keep-alive") != std::string::npos) {
     this->m_keep_alive = true;

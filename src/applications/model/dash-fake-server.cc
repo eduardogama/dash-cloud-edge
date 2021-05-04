@@ -424,7 +424,7 @@ void DASHFakeServerApplication::ConnectionAccepted (Ptr<Socket> socket, const Ad
 void DASHFakeServerApplication::FinishedCallback (uint64_t socket_id)
 {
   // create timer to finish this, because if we do it in here, we will crash the app
-  Simulator::Schedule(Seconds(10), &DASHFakeServerApplication::DoFinishSocket, this, socket_id);
+  Simulator::Schedule(Seconds(1.0), &DASHFakeServerApplication::DoFinishSocket, this, socket_id);
   // DASHFakeServerApplication::DoFinishSocket(socket_id);
 }
 
