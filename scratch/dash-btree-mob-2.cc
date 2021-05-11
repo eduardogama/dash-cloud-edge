@@ -35,7 +35,7 @@
 using namespace ns3;
 
 
-NS_LOG_COMPONENT_DEFINE ("DashBTreeBMobility");
+NS_LOG_COMPONENT_DEFINE ("DashBTreeBMobilityTwo");
 
 int main (int argc, char *argv[])
 {
@@ -70,7 +70,7 @@ int main (int argc, char *argv[])
   string dir = CreateDir("../dash-multi-layer-" + to_string(seed));
 
   string filePath = dir + "/Troughput_" + to_string(seed) + "_";
-  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, true);
+  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, false);
 
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
   Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
@@ -168,6 +168,7 @@ int main (int argc, char *argv[])
 
   map<int, NodeContainer> map_aps;
   map<int, pair< int, Ptr<Node> >> m_clients;
+  map<int, string> m_client_server;
   NodeContainer clients;
 
   for (size_t i = 0; i < network.getNodes().size(); i++) {
@@ -177,21 +178,36 @@ int main (int argc, char *argv[])
     }
   }
 
+  ifstream usersConnection("UsersConnection");
+
+  string line;
   int userId = 0;
-  for (size_t i_client = 0; i_client < n_clients; i_client++) {
-    for (auto& ap : map_aps) {
-      int apId = ap.first;
-      NodeContainer &apContainer = ap.second;
+  vector<int> total_user(8, 0);
+  while (getline(usersConnection, line)) {
+    vector<string> values = split(line, " ");
 
-      Ptr<Node> node_client = CreateObject<Node> ();
-      pair<int, Ptr<Node>> ap_client{apId, node_client};
+    int apId      = std::stoi(values[2]);
+    string server = values[4];
 
-      clients.Add(node_client);
-      apContainer.Add(node_client);
-      m_clients[userId] = ap_client;
-      userId++;
+    std::cout << values[0] << " " << values[1] << " " <<  apId << " " << values[3] << " " << values[4] << endl;
+    Ptr<Node> node_client = CreateObject<Node> ();
+    pair<int, Ptr<Node>> ap_client{apId, node_client};
+
+    clients.Add(node_client);
+    m_clients[userId] = ap_client;
+    m_client_server[userId] = server;
+
+    if (total_user[apId] < n_clients/2 ) {
+      map_aps[apId].Add(node_client);
+      total_user[apId]++;
+    } else {
+      int aux = (apId - 1)%4 + 3;
+      map_aps[aux].Add(node_client);
     }
+    userId++;
   }
+  usersConnection.close();
+  getchar();
 
   int seedValue = time(0);
   RngSeedManager::SetSeed(seedValue);
@@ -217,6 +233,8 @@ int main (int argc, char *argv[])
       client_i++;
     }
   }
+
+  std::cout << "/* message */" << '\n';
 
   positionAlloc->Add(Vector(50, 15, 0));   // Ap 0
 	positionAlloc->Add(Vector(250, 15, 0));  // Ap 1
@@ -317,7 +335,7 @@ int main (int argc, char *argv[])
   fileUserArrive.open("UserArrive", ios::out);
 
   for (auto& client : m_clients) {
-    double start = poisson();
+    double start = 0;
 
     int apId             = client.second.first;
     Ptr<Node> clientNode = client.second.second;
@@ -329,7 +347,7 @@ int main (int argc, char *argv[])
     int screenHeight = 1080;
 
     stringstream mpd_baseurl;
-    mpd_baseurl << "http://" << strIpv4Server << "/content/mpds/";
+    mpd_baseurl << "http://" << m_client_server[userId] << "/content/mpds/";
 
     stringstream ssMPDURL;
     ssMPDURL << mpd_baseurl.str() << "vid" << 1 << ".mpd.gz";
@@ -357,10 +375,10 @@ int main (int argc, char *argv[])
 
     Ptr<Application> app = clientNode->GetApplication(0);
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
-    serverTableList[strIpv4Bst] = strIpv4Server;
+    serverTableList[strIpv4Bst] = m_client_server[userId];
 
     fileMobility << clientNode->GetId() << " " << final_client << " " <<  apId
-                 << " " << strIpv4Lcl << " " << strIpv4Server << endl;
+                 << " " << strIpv4Lcl << " " << m_client_server[userId] << endl;
 
     Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, userId);
   }
