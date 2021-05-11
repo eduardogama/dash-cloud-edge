@@ -67,10 +67,10 @@ int main (int argc, char *argv[])
 
   cmd.Parse (argc, argv);
 
-  string dir = CreateDir("../dash-multi-layer-" + to_string(seed));
+  string dir = CreateDir("../DashBTreeBMobility-" + to_string(seed));
 
   string filePath = dir + "/Troughput_" + to_string(seed) + "_";
-  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath);
+  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, true);
 
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
   Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
