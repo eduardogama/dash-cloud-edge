@@ -67,7 +67,7 @@ int main (int argc, char *argv[])
 
   cmd.Parse (argc, argv);
 
-  string dir = CreateDir("../dash-multi-layer-" + to_string(seed));
+  string dir = CreateDir("../DashBTreeBMobilityTwo-" + to_string(seed));
 
   string filePath = dir + "/Troughput_" + to_string(seed) + "_";
   NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, false);
