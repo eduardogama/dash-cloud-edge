@@ -335,7 +335,7 @@ int main (int argc, char *argv[])
   fileUserArrive.open("UserArrive", ios::out);
 
   for (auto& client : m_clients) {
-    double start = 0;
+    double start = poisson();
 
     int apId             = client.second.first;
     Ptr<Node> clientNode = client.second.second;
