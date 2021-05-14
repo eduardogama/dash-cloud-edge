@@ -388,21 +388,21 @@ int main (int argc, char *argv[])
   fileUserArrive.close();
 
 
-  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
 
   Simulator::Schedule(Seconds(0), &NodeStatistics::CalculateThroughput, &eCtrl);
