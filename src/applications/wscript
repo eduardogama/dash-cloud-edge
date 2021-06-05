@@ -23,11 +23,11 @@ def build(bld):
         'model/http-client.cc',
         'model/http-client-dash.cc',
         'model/http-multimedia-consumer.cc',
-        'model/dashplayer-tracer.cc',        
+        'model/dashplayer-tracer.cc',
         'model/three-gpp-http-client.cc',
         'model/three-gpp-http-server.cc',
         'model/three-gpp-http-header.cc',
-        'model/three-gpp-http-variables.cc', 
+        'model/three-gpp-http-variables.cc',
         'helper/bulk-send-helper.cc',
         'helper/on-off-helper.cc',
         'helper/packet-sink-helper.cc',
@@ -39,12 +39,15 @@ def build(bld):
         'helper/dash-server-helper.cc',
         'model/gta-dash.cc',
         'model/aggregation.cc',
-        'helper/aggregation-helper.cc'
+        'helper/aggregation-helper.cc',
+        'model/dash-fake-cache-server.cc',
+        'model/dash-fake-virtual-clientsocket.cc',
+        'helper/dash-cache-server-helper.cc'
         ]
 
     applications_test = bld.create_ns3_module_test_library('applications')
     applications_test.source = [
-        'test/three-gpp-http-client-server-test.cc', 
+        'test/three-gpp-http-client-server-test.cc',
         'test/udp-client-server-test.cc'
         ]
 
@@ -70,7 +73,7 @@ def build(bld):
         'model/http-client.h',
         'model/http-client-dash.h',
         'model/http-multimedia-consumer.h',
-        'model/dashplayer-tracer.h',        
+        'model/dashplayer-tracer.h',
         'model/three-gpp-http-client.h',
         'model/three-gpp-http-server.h',
         'model/three-gpp-http-header.h',
@@ -86,9 +89,12 @@ def build(bld):
         'helper/dash-server-helper.h',
         'model/gta-dash.h',
         'model/aggregation.h',
-        'helper/aggregation-helper.h'        
+        'helper/aggregation-helper.h',
+        'model/dash-fake-cache-server.h',
+        'model/dash-fake-virtual-clientsocket.h',
+        'helper/dash-cache-server-helper.h'
         ]
-    
+
     if (bld.env['ENABLE_EXAMPLES']):
         bld.recurse('examples')
 

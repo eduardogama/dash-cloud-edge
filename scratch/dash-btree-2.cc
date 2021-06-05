@@ -35,14 +35,14 @@
 using namespace ns3;
 
 
-NS_LOG_COMPONENT_DEFINE ("DashBTreeBMobilityTwo");
+NS_LOG_COMPONENT_DEFINE ("DashBTreeBMobility");
 
 int main (int argc, char *argv[])
 {
   NetworkTopology network;
   std::map<string, string> serverTableList;
 	unsigned n_ap = 0, n_clients = 1;
-  int dst_server = 7;
+  unsigned dst_server = 7;
 
   //Register packet receptions to calculate throughput
 
@@ -67,10 +67,10 @@ int main (int argc, char *argv[])
 
   cmd.Parse (argc, argv);
 
-  string dir = CreateDir("../DashBTreeBMobilityTwo-" + to_string(seed));
+  string dir = CreateDir("../DashBTreeBMobility-" + to_string(seed));
 
   string filePath = dir + "/Troughput_" + to_string(seed) + "_";
-  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, false);
+  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, true);
 
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
   Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
@@ -168,7 +168,6 @@ int main (int argc, char *argv[])
 
   map<int, NodeContainer> map_aps;
   map<int, pair< int, Ptr<Node> >> m_clients;
-  map<int, string> m_client_server;
   NodeContainer clients;
 
   for (size_t i = 0; i < network.getNodes().size(); i++) {
@@ -178,38 +177,21 @@ int main (int argc, char *argv[])
     }
   }
 
-  ifstream usersConnection("UsersConnection");
-
-  string line;
   int userId = 0;
-  vector<int> total_user(8, 0);
-  while (getline(usersConnection, line)) {
-    vector<string> values = split(line, " ");
+  for (size_t i_client = 0; i_client < n_clients; i_client++) {
+    for (auto& ap : map_aps) {
+      int apId = ap.first;
+      NodeContainer &apContainer = ap.second;
 
-    int apId      = std::stoi(values[2]);
-    string server = values[4];
+      Ptr<Node> node_client = CreateObject<Node> ();
+      pair<int, Ptr<Node>> ap_client{apId, node_client};
 
-    std::cout << values[0] << " " << values[1] << " " <<  apId << " " << values[3] << " " << values[4] << endl;
-    Ptr<Node> node_client = CreateObject<Node> ();
-
-    if (total_user[apId] < n_clients/2) {
-      map_aps[apId].Add(node_client);
-      total_user[apId]++;
-    } else {
-      int aux = (apId-1)%4 + 3;
-      map_aps[aux].Add(node_client);
+      clients.Add(node_client);
+      apContainer.Add(node_client);
+      m_clients[userId] = ap_client;
+      userId++;
     }
-
-    pair<int, Ptr<Node>> ap_client{apId, node_client};
-
-    clients.Add(node_client);
-    m_clients[userId] = ap_client;
-    m_client_server[userId] = server;
-
-    userId++;
   }
-  usersConnection.close();
-  getchar();
 
   int seedValue = time(0);
   RngSeedManager::SetSeed(seedValue);
@@ -235,8 +217,6 @@ int main (int argc, char *argv[])
       client_i++;
     }
   }
-
-  std::cout << "/* message */" << '\n';
 
   positionAlloc->Add(Vector(50, 15, 0));   // Ap 0
 	positionAlloc->Add(Vector(250, 15, 0));  // Ap 1
@@ -304,11 +284,21 @@ int main (int argc, char *argv[])
 
 	string strIpv4Server = Ipv4AddressToString(n_server->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
+  DASHServerHelper server(Ipv4Address::GetAny (), 80, strIpv4Server,
+                          "/content/mpds/", representationStrings, "/content/segments/");
+
+  ApplicationContainer serverApps = server.Install(n_server);
+	serverApps.Start (Seconds(0.0));
+	serverApps.Stop (Seconds(stopTime));
+
   for (size_t i = 0; i < nodes.GetN(); i++) {
+    if (i == dst_server) {
+      continue;
+    }
     Ptr<Node> edgeServer = nodes.Get(i);
     string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
-    DASHServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
+    DASHCacheServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
                             "/content/mpds/", representationStrings, "/content/segments/");
 
     ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
@@ -349,7 +339,7 @@ int main (int argc, char *argv[])
     int screenHeight = 1080;
 
     stringstream mpd_baseurl;
-    mpd_baseurl << "http://" << m_client_server[userId] << "/content/mpds/";
+    mpd_baseurl << "http://" << strIpv4Server << "/content/mpds/";
 
     stringstream ssMPDURL;
     ssMPDURL << mpd_baseurl.str() << "vid" << 1 << ".mpd.gz";
@@ -377,10 +367,10 @@ int main (int argc, char *argv[])
 
     Ptr<Application> app = clientNode->GetApplication(0);
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
-    serverTableList[strIpv4Bst] = m_client_server[userId];
+    serverTableList[strIpv4Bst] = strIpv4Server;
 
     fileMobility << clientNode->GetId() << " " << final_client << " " <<  apId
-                 << " " << strIpv4Lcl << " " << m_client_server[userId] << endl;
+                 << " " << strIpv4Lcl << " " << strIpv4Server << endl;
 
     Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, userId);
   }
@@ -390,21 +380,21 @@ int main (int argc, char *argv[])
   fileUserArrive.close();
 
 
-  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
+  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
 
   Simulator::Schedule(Seconds(0), &NodeStatistics::CalculateThroughput, &eCtrl);
