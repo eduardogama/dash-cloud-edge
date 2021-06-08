@@ -31,7 +31,7 @@ namespace ns3 {
 * DASH CACHE SERVER HELPER *
 **********************/
 
-DASHCacheServerHelper::DASHCacheServerHelper (Address address, uint16_t port, std::string Hostname,
+DASHCacheServerHelper::DASHCacheServerHelper (Address address, uint16_t port, std::string Hostname, std::string RemoteHostname,
   std::string MPDDirectory, std::string RepresentationsMetaDataFiles,
   std::string RepresentationsSegmentsDirectory)
 {
@@ -39,12 +39,13 @@ DASHCacheServerHelper::DASHCacheServerHelper (Address address, uint16_t port, st
   SetAttribute ("ListeningAddress", AddressValue (address));
   SetAttribute ("Port", UintegerValue (port));
   SetAttribute ("Hostname", StringValue (Hostname));
+  SetAttribute ("RemoteCDN", StringValue (RemoteHostname));
   SetAttribute ("MPDDirectory", StringValue (MPDDirectory));
   SetAttribute ("RepresentationsMetaDataFiles", StringValue (RepresentationsMetaDataFiles));
   SetAttribute ("RepresentationsSegmentsDirectory", StringValue (RepresentationsSegmentsDirectory));
 }
 
-DASHCacheServerHelper::DASHCacheServerHelper (Ipv4Address address, uint16_t port, std::string Hostname,
+DASHCacheServerHelper::DASHCacheServerHelper (Ipv4Address address, uint16_t port, std::string Hostname, std::string RemoteHostname,
   std::string MPDDirectory, std::string RepresentationsMetaDataFiles,
   std::string RepresentationsSegmentsDirectory)
 {
@@ -52,12 +53,13 @@ DASHCacheServerHelper::DASHCacheServerHelper (Ipv4Address address, uint16_t port
   SetAttribute ("ListeningAddress", AddressValue (address));
   SetAttribute ("Port", UintegerValue (port));
   SetAttribute ("Hostname", StringValue (Hostname));
+  SetAttribute ("RemoteCDN", StringValue (RemoteHostname));
   SetAttribute ("MPDDirectory", StringValue (MPDDirectory));
   SetAttribute ("RepresentationsMetaDataFiles", StringValue (RepresentationsMetaDataFiles));
   SetAttribute ("RepresentationsSegmentsDirectory", StringValue (RepresentationsSegmentsDirectory));
 }
 
-DASHCacheServerHelper::DASHCacheServerHelper (Ipv6Address address, uint16_t port, std::string Hostname,
+DASHCacheServerHelper::DASHCacheServerHelper (Ipv6Address address, uint16_t port, std::string Hostname, std::string RemoteHostname,
   std::string MPDDirectory, std::string RepresentationsMetaDataFiles,
   std::string RepresentationsSegmentsDirectory)
 {
@@ -65,6 +67,7 @@ DASHCacheServerHelper::DASHCacheServerHelper (Ipv6Address address, uint16_t port
   SetAttribute ("ListeningAddress", AddressValue (address));
   SetAttribute ("Port", UintegerValue (port));
   SetAttribute ("Hostname", StringValue (Hostname));
+  SetAttribute ("RemoteCDN", StringValue (RemoteHostname));
   SetAttribute ("MPDDirectory", StringValue (MPDDirectory));
   SetAttribute ("RepresentationsMetaDataFiles", StringValue (RepresentationsMetaDataFiles));
   SetAttribute ("RepresentationsSegmentsDirectory", StringValue (RepresentationsSegmentsDirectory));

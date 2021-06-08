@@ -30,6 +30,7 @@ public:
   void ConnectionFailed(Ptr<Socket> socket);
 
   void HandleReadyToTransmit(Ptr<Socket> socket, uint32_t txSize);
+  void HandleReadyToTransmitFromUser(Ptr<Socket> socket, uint32_t txSize);
   void HandleIncomingData(Ptr<Socket> socket, Address from, Ptr<Packet> packet);
 
   void IncomingDataFromServer(Ptr<Socket> socket);
@@ -52,13 +53,16 @@ protected:
   Callback<void, uint64_t> m_finished_callback;
 
 protected:
-
+  std::string m_outFile;
   uint8_t* _tmpbuffer;
 
   uint64_t m_socket_id;
 
   uint32_t bytes_recv;
   uint32_t bytes_sent;
+
+  uint32_t bytes_recv_from_server;
+  uint32_t bytes_sent_from_server;
 
   uint32_t m_totalBytesToTx;
   uint32_t m_currentBytesTx;
@@ -83,6 +87,7 @@ protected:
   std::string& mpdFile;
 
   unsigned requested_content_length;
+  bool m_keep_alive;
 };
 
 }

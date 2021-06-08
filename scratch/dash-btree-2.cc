@@ -298,7 +298,7 @@ int main (int argc, char *argv[])
     Ptr<Node> edgeServer = nodes.Get(i);
     string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
-    DASHCacheServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
+    DASHCacheServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge, strIpv4Server,
                             "/content/mpds/", representationStrings, "/content/segments/");
 
     ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
@@ -320,6 +320,10 @@ int main (int argc, char *argv[])
 	//=======================================================================================
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables();
+
+  n_server = nodes.Get(0);
+
+  strIpv4Server = Ipv4AddressToString(n_server->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
   ofstream fileMobility;
   fileMobility.open("UsersConnection", ios::out);

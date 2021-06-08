@@ -45,13 +45,13 @@ public:
    * \param ContentDirectory The directory the server will serve files from
    * \param Hostname The (virtual) hostname of the server
    */
-  DASHCacheServerHelper (Address ip, uint16_t port, std::string Hostname,
+  DASHCacheServerHelper (Address ip, uint16_t port, std::string Hostname, std::string RemoteHostname,
   std::string MPDDirectory, std::string RepresentationsMetaDataFiles,
   std::string RepresentationsSegmentsDirectory);
-  DASHCacheServerHelper (Ipv4Address ip, uint16_t port, std::string Hostname,
+  DASHCacheServerHelper (Ipv4Address ip, uint16_t port, std::string Hostname, std::string RemoteHostname,
   std::string MPDDirectory, std::string RepresentationsMetaDataFiles,
   std::string RepresentationsSegmentsDirectory);
-  DASHCacheServerHelper (Ipv6Address ip, uint16_t port, std::string Hostname,
+  DASHCacheServerHelper (Ipv6Address ip, uint16_t port, std::string Hostname, std::string RemoteHostname,
   std::string MPDDirectory, std::string RepresentationsMetaDataFiles,
   std::string RepresentationsSegmentsDirectory);
 
