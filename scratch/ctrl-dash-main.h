@@ -7,6 +7,7 @@
 #include "ns3/address.h"
 
 #include "utils.h"
+#include "videos.h"
 
 #include "group-user.h"
 
@@ -38,8 +39,8 @@ public:
 
   void Setup (NetworkTopology* network, string str_ipv4_server, Address address, uint16_t port);
 
-	void SetServerTableList(map<string, string> *serverTableList);
-	string getServerTableList(string server);
+	void SetServerTableList(map<pair<string, int>, string> *serverTableList);
+	string getServerTableList(string server, int content);
 
 
 	TypeOpt tryRequest (unsigned from, unsigned to, int content, int userId);
@@ -50,6 +51,7 @@ public:
 	void DoSendRedirect ();
 
 	void RedirectUsers(unsigned actualNode, unsigned nextNode);
+	void DoRedirectUsers(unsigned i, unsigned nextNode, int content);
 
 	void CacheJoinAssignment(unsigned from, unsigned to);
 	void onAddContainer(unsigned from, unsigned to, int content, int userId);
@@ -109,7 +111,7 @@ private:
 	map<string, Ptr<Node>>   m_server_node;
 	map<string, ServerState> m_server_state;
 
-	map<string, string> *serverTableList;
+	map<pair<string, int>, string> *serverTableList;
 };
 
 NS_OBJECT_ENSURE_REGISTERED (DashController);
@@ -197,14 +199,14 @@ void DashController::Setup(NetworkTopology* network, string str_ipv4_server, Add
 	}
 }
 
-void DashController::SetServerTableList(map<string, string> *serverTableList)
+void DashController::SetServerTableList(map<pair<string, int>, string> *serverTableList)
 {
 	this->serverTableList = serverTableList;
 }
 
-string DashController::getServerTableList(string server)
+string DashController::getServerTableList(string server, int content)
 {
-	return (*serverTableList)[server];
+	return (*serverTableList)[{server, content}];
 }
 
 void DashController::RunController ()
@@ -236,7 +238,7 @@ void DashController::DoSendRedirect ()
 
 			string serverIp = group->getServerIp();
 
-			(*serverTableList)[user->getIp()] = group->getServerIp();
+			(*serverTableList)[{user->getIp(), user->getContent()}] = group->getServerIp();
 			if (m_clientSocket[user->getIp()] == 0) {
 				clientList.push_back(user->getIp());
 				continue;
@@ -259,14 +261,14 @@ TypeOpt DashController::tryRequest(unsigned from, unsigned to, int content, int 
 	TypeOpt takeAction = RequestAccepted;
 	m_group_i = DashController::AddUserInGroup(from, to, content, userId);
 
-	int actualNode = m_group_i->getRoute().getActualStep();
-	int nextNode   = m_group_i->getRoute().getNextStep();
-
-	if (network->canAlloc(actualNode, nextNode)) {
-		network->allocStream(actualNode, nextNode);
-	} else {
-		takeAction = AddContainer;
-	}
+	// int actualNode = m_group_i->getRoute().getActualStep();
+	// int nextNode   = m_group_i->getRoute().getNextStep();
+	//
+	// if (network->canAlloc(actualNode, nextNode)) {
+	// 	network->allocStream(actualNode, nextNode);
+	// } else {
+	// 	takeAction = AddContainer;
+	// }
 
 	return takeAction;
 }
@@ -391,7 +393,7 @@ GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int conten
   for (auto& group : groups) {
     string strGroupAddr = group->getId();
 
-		if (strIpv4Bst == strGroupAddr /*and cont == it->getContent()*/) {
+		if (strIpv4Bst == strGroupAddr && content == group->getContent()) {
     	group->addUser(new_user);
 			return group;
 		}
@@ -400,8 +402,8 @@ GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int conten
 	network->SearchRoute(to, from); // From Dst (7) to Ap (3,4,5,6)
 
   if (!insertGroup) {
-		string serverIpv4 = (*serverTableList)[strIpv4Bst];
-		groups.push_back(new GroupUser(strIpv4Bst, serverIpv4, from, to, network->getRoute(), new_user));
+		string serverIpv4 = (*serverTableList)[{strIpv4Bst, content}];
+		groups.push_back(new GroupUser(strIpv4Bst, serverIpv4, from, to, network->getRoute(), content, new_user));
 	}
 
 	return groups[groups.size() - 1];
@@ -409,34 +411,85 @@ GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int conten
 
 void DashController::RedirectUsers(unsigned actualNode, unsigned nextNode)
 {
-	vector<int> groups_i;
+
 	for (unsigned i = 0; i < this->groups.size(); i++) {
 		Path path = this->groups[i]->getRoute();
+
+		unsigned actual = actualNode;
+		unsigned next   = nextNode;
+
 		path.goStart();
 		while (!path.isEndPath()) {
-			if (path.getActualStep() == actualNode && path.getNextStep() == nextNode) {
-				groups_i.push_back(i);
-				break;
+			if (path.getActualStep() == actual && path.getNextStep() == next) {
+
+				int content = this->groups[i]->getContent();
+				// std::cout << "entroua qui" << '\n';
+				// std::cout << content << '\n';
+				// std::cout << "has Content " << content << " in Node group(" << groups[i]->getId() << "," << groups[i]->getContent() << ")=" << hasVideoByNode(next, content) << '\n';
+
+				if (hasVideoByNode(next, content)){
+					DoRedirectUsers(i, next, content);
+					// getchar();
+					break;
+				} else {
+					path.goAhead();
+					actual = path.getActualStep();
+					next   = path.getNextStep();
+					continue;
+				}
 			}
 			path.goAhead();
 		}
 	}
 
-	for (auto& g_i : groups_i) {
-		network->SearchRoute(nextNode, groups[g_i]->getFrom());
-
-		std::cout << "groups(" << groups[g_i]->getId() << ") = Old" << groups[g_i]->getRoute() << '\n';
-		string newServerIp = getInterfaceNode(nextNode);
-
-		groups[g_i]->setRoute(network->getRoute());
-		groups[g_i]->setActualNode(nextNode);
-		groups[g_i]->setServerIp(newServerIp);
-
-		(*serverTableList)[groups[g_i]->getId()] = newServerIp;
-	}
-
 	printGroups();
 }
+
+void DashController::DoRedirectUsers(unsigned i, unsigned nextNode, int content)
+{
+	network->SearchRoute(nextNode, groups[i]->getFrom());
+
+	std::cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << ") = Old " << groups[i]->getRoute() << '\n';
+	std::cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << ") = New " << network->getRoute() << '\n';
+	string newServerIp = getInterfaceNode(nextNode);
+
+	groups[i]->setRoute(network->getRoute());
+	groups[i]->setActualNode(nextNode);
+	groups[i]->setServerIp(newServerIp);
+
+	(*serverTableList)[{groups[i]->getId(), groups[i]->getContent()}] = newServerIp;
+}
+
+// void DashController::RedirectUsers(unsigned actualNode, unsigned nextNode)
+// {
+// 	vector<int> groups_i;
+// 	for (unsigned i = 0; i < this->groups.size(); i++) {
+// 		Path path = this->groups[i]->getRoute();
+// 		path.goStart();
+// 		while (!path.isEndPath()) {
+// 			if (path.getActualStep() == actualNode && path.getNextStep() == nextNode) {
+// 				groups_i.push_back(i);
+// 				break;
+// 			}
+// 			path.goAhead();
+// 		}
+// 	}
+//
+// 	for (auto& g_i : groups_i) {
+// 		network->SearchRoute(nextNode, groups[g_i]->getFrom());
+//
+// 		std::cout << "groups(" << groups[g_i]->getId() << ") = Old" << groups[g_i]->getRoute() << '\n';
+// 		string newServerIp = getInterfaceNode(nextNode);
+//
+// 		groups[g_i]->setRoute(network->getRoute());
+// 		groups[g_i]->setActualNode(nextNode);
+// 		groups[g_i]->setServerIp(newServerIp);
+//
+// 		(*serverTableList)[groups[g_i]->getId()] = newServerIp;
+// 	}
+//
+// 	printGroups();
+// }
 
 string DashController::getInterfaceNode(int node)
 {
@@ -458,6 +511,7 @@ void DashController::printGroups()
 {
 	for (size_t i = 0; i < this->groups.size(); i++) {
 		std::cout << "Id=" << this->groups[i]->getId() << " Server=" << this->groups[i]->getServerIp();
+		std::cout << " Content=" << this->groups[i]->getContent();
 		std::cout << " " << this->groups[i]->getRoute() << '\n';
 	}
 }

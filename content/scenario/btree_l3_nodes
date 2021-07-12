@@ -1,0 +1,9 @@
+#id, type, AdaptationLogic, StartUpDelay, AllowDownscale, AllowUpscale, MaxBufferedSeconds
+0 router
+1 router
+2 router
+3 ap
+4 ap
+5 ap
+6 ap
+7 cdn

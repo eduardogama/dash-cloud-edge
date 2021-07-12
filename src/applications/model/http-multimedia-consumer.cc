@@ -76,6 +76,8 @@ TypeId MultimediaConsumer<Parent>::GetTypeId(void)
                     MakeDoubleAccessor(&MultimediaConsumer<Parent>::startupDelay), MakeDoubleChecker<double>())
       .template AddAttribute("UserId", "The ID of this user (optional)", UintegerValue(0),
                     MakeUintegerAccessor(&MultimediaConsumer<Parent>::m_userId), MakeUintegerChecker<uint32_t>())
+      // .template AddAttribute("ContentId", "Content video of the screen", UintegerValue(1),
+      //               MakeUintegerAccessor(&MultimediaConsumer<Parent>::m_contentId), MakeUintegerChecker<uint32_t>())
       .AddTraceSource("PlayerTracer", "Trace Player consumes of multimedia data",
                       MakeTraceSourceAccessor(&MultimediaConsumer<Parent>::m_playerTracer), "bla")
                     ;
@@ -121,9 +123,9 @@ void MultimediaConsumer<Parent>::StartApplication() // Called at time specified 
   if (m_mpdUrl.find(delim) == 0) {
     string new_url = m_mpdUrl.substr(7);
     int pos = new_url.find("/");
-    
+
     string hostname = new_url.substr(0,pos);
-    super::m_hostName = super::getServerTableList(super::strNodeIpv4);
+    super::m_hostName = super::getServerTableList(super::strNodeIpv4, super::m_contentId);
     fprintf(stderr, "Client(%d,%s): Old Hostname = %s new Hostname = %s\n", super::node_id, super::strNodeIpv4.c_str(), hostname.c_str(), super::m_hostName.c_str());
 
     if (super::m_hostName != hostname) {
@@ -505,7 +507,6 @@ void MultimediaConsumer<Parent>::OnMultimediaFile()
       NS_LOG_DEBUG("Init Segment received (rep=" << m_curRepId << ")");
       // cout << "Init Segment received (rep=" << m_curRepId << ")" << '\n';
     }
-    // getchar();
   } else {
     // normal segment
 

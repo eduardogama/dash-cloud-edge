@@ -12,12 +12,14 @@ DashFakeVirtualClientSocket::DashFakeVirtualClientSocket(std::map<std::string, l
   Ptr<Socket> socket_usr,
   Ptr<Node> node,
   std::string m_remoteCDN,
+  std::string m_hostName,
   Callback<void, uint64_t> finished_callback) :
   m_fileSizes(fileSizes),
   mpdFile(mpdFile),
   m_socket_usr(socket_usr),
   node(node),
   m_remoteCDN(m_remoteCDN),
+  m_hostName(m_hostName),
   m_peerPort(80)
 {
   this->m_socket_id = socket_id;
@@ -73,41 +75,19 @@ void DashFakeVirtualClientSocket::ConnectionFailed(Ptr<Socket> socket)
 
 }
 
-void DashFakeVirtualClientSocket::HandleReadyToTransmit(Ptr<Socket> socket, uint32_t txSize)
-{
-  std::cout << "HandleReadyToTransmit func from Cache Server " << m_currentBytesTx
-            << " " <<  m_totalBytesToTx << '\n';
-
-  while (m_currentBytesTx < m_totalBytesToTx) {
-    // if (!m_keep_alive)
-    // {
-      uint32_t remainingBytes = m_totalBytesToTx - m_currentBytesTx;
-      remainingBytes = std::min(remainingBytes, socket->GetTxAvailable ());
-
-      Ptr<Packet> replyPacket;
-
-      _tmpbuffer = (uint8_t*) &((this->m_bytesToTransmit)[m_currentBytesTx]);
-      replyPacket = Create<Packet> (_tmpbuffer, remainingBytes);
-
-      int amountSent = socket->Send (replyPacket);
-      m_currentBytesTx += amountSent;
-    // }
-  }
-
-  std::cout << "Total Bytes " << m_currentBytesTx << " Transmitted " << '\n';
-  this->m_bytesToTransmit.clear();
-  // std::vector<uint8_t>().swap( this->m_bytesToTransmit );
-}
-
 void DashFakeVirtualClientSocket::IncomingDataFromServer(Ptr<Socket> socket)
 {
+  std::cout << "entrou aqui IncomingDataFromServer" << '\n';
+  std::cout << m_is_first_packet << '\n';
+  std::cout << bytes_recv_from_server << " " << requested_content_length << '\n';
   Ptr<Packet> packet;
   Address from;
+
+  uint32_t bytes_recv_this_time = 0;
 
   while (true)
   {
     packet = socket->RecvFrom (from);
-
     if (!(packet)) {
       break;
     }
@@ -118,46 +98,103 @@ void DashFakeVirtualClientSocket::IncomingDataFromServer(Ptr<Socket> socket)
     size_t packet_size = packet->CopyData(_tmpbuffer, packet->GetSize());
     _tmpbuffer[packet_size] = '\0';
 
-    // bytes_recv_from_server += packet_size;
-
+    bytes_recv_this_time += packet_size;
     if (m_is_first_packet) {
       m_is_first_packet = false;
       int status_code = 0;
+
       int where = ParseResponseHeader(_tmpbuffer, packet_size, &status_code, &(requested_content_length));
 
       bytes_recv_from_server += packet_size - where;
     } else {
       bytes_recv_from_server += packet_size;
     }
+    std::cout << bytes_recv_from_server << " " << requested_content_length << '\n';
 
     if (bytes_recv_from_server == requested_content_length) {
-      break;
+      std::cout << "CacheServer: File "<< this->m_fileToRequest << " received with size " << requested_content_length << '\n';
+      this->m_fileSizes[this->m_fileToRequest] = requested_content_length;
+
+      FinishedIncomingDataFromServer(m_socket_usr, m_activeRecvString);
     }
-  }
-
-  if (bytes_recv_from_server == requested_content_length) {
-    std::cout << "CacheServer: File "<< this->m_fileToRequest << " received with size " << requested_content_length << '\n';
-    this->m_fileSizes[this->m_fileToRequest] = requested_content_length;
-
-    FinishedIncomingDataFromServer(m_socket_usr, m_activeRecvString);
   }
 }
 
 void DashFakeVirtualClientSocket::FinishedIncomingDataFromServer(Ptr<Socket> socket, std::string data)
 {
-  fprintf(stderr, "CacheServer responding chunk to the server\n");
-  getchar();
+  fprintf(stderr, "CacheServer responding chunk %s to the server\n", this->m_fileToRequest.c_str());
+
+  long filesize = GetFileSize(this->m_fileToRequest);
+
+  // Create HTTP 1.1 compatible request
+  std::stringstream replySS;
+  replySS << "HTTP/1.1 200 OK" << CRLF; // OR HTTP/1.1 404 Not Found
+  replySS << "Content-Type: text/xml; charset=utf-8" << CRLF; // e.g., when sending the MPD
+  replySS << "Content-Length: " << filesize << CRLF;
+  replySS << CRLF;
+
+  std::string replyString = replySS.str();
+
   // this->m_fileToRequest = filename;
   m_is_first_packet = true;
 
-  uint8_t* buffer = (uint8_t*)data.c_str();
-  Ptr<Packet> p = Create<Packet> (buffer, data.length());
+  uint8_t* buffer = (uint8_t*)replyString.c_str();
+  AddBytesToTransmit(buffer, replyString.length());
 
-  m_socket_usr->Send (p);
+  fprintf(stderr, "VirtualCacheServer(%ld): Generating virtual payload with size %ld ...\n", (long int) node->GetId(), filesize);
+
+  // now append the virtual payload data
+  uint8_t tmp[4096];
+  for (int i = 0; i < 4096; i++) {
+    tmp[i] = (uint8_t)rand();
+  }
+
+  int cnt = 0;
+  while (cnt < filesize) {
+    if (cnt + 4096 < filesize) {
+      AddBytesToTransmit(tmp, 4096);
+    } else {
+      AddBytesToTransmit(tmp, filesize - cnt);
+    }
+    cnt += 4096;
+  }
+
+  std::cout << m_currentBytesTx << " " << m_totalBytesToTx << " " << filesize << " " << m_bytesToTransmit.size() << '\n';
+  // getchar();
+  //tOMORROW IMPLEMENT HandleReadyToTransmit
+  m_currentBytesTx = 0;
+  m_totalBytesToTx = m_bytesToTransmit.size();
+  while (m_currentBytesTx < m_totalBytesToTx)
+  {
+    uint32_t remainingBytes = m_totalBytesToTx - m_currentBytesTx;
+
+    if (remainingBytes > 2860)
+      remainingBytes = 2860;
+
+    remainingBytes = std::min(remainingBytes, m_socket_usr->GetTxAvailable ());
+
+    Ptr<Packet> replyPacket;
+
+    uint8_t* buffer = (uint8_t*) &((this->m_bytesToTransmit)[m_currentBytesTx]);
+    replyPacket = Create<Packet> (buffer, remainingBytes);
+
+    int amountSent;
+    amountSent = m_socket_usr->Send (replyPacket);
+    if (amountSent <= 0) {
+      return;
+    }
+
+    m_currentBytesTx += amountSent;
+  }
+
 }
 
 void DashFakeVirtualClientSocket::IncomingDataFromUser(Ptr<Socket> socket)
 {
+  if (this->m_bytesToTransmit.size() != 0) {
+    this->m_bytesToTransmit.clear();
+  }
+
   Ptr<Packet> packet;
   Address from;
 
@@ -194,7 +231,7 @@ void DashFakeVirtualClientSocket::IncomingDataFromUser(Ptr<Socket> socket)
 void DashFakeVirtualClientSocket::FinishedIncomingDataFromUser(Ptr<Socket> socket, std::string data)
 {
   fprintf(stderr, "VirtualCacheServer(%ld)::FinishedIncomingDataFromUser(socket,data=str(%ld))\n", m_socket_id, data.length());
-
+  // getchar();
   std::string filename = ParseHTTPHeader(data);
 
   if (m_fileSizes.find(filename) != m_fileSizes.end()) {
@@ -240,8 +277,6 @@ void DashFakeVirtualClientSocket::FinishedIncomingDataFromUser(Ptr<Socket> socke
         }
         cnt += 4096;
       }
-
-      // this->m_totalBytesToTx += filesize;
     }
 
     HandleReadyToTransmitFromUser(socket, socket->GetTxAvailable());
@@ -252,8 +287,18 @@ void DashFakeVirtualClientSocket::FinishedIncomingDataFromUser(Ptr<Socket> socke
     this->m_fileToRequest = filename;
     m_is_first_packet = true;
 
-    uint8_t* buffer = (uint8_t*)data.c_str();
-    Ptr<Packet> p = Create<Packet> (buffer, data.length());
+    std::stringstream requestSS;
+    requestSS << "GET " << m_fileToRequest << " HTTP/1.1" << CRLF;
+    requestSS << "Host: " << m_hostName << CRLF;
+    requestSS << "Accept: text/html,application/xml" << CRLF;
+    requestSS << "User-Agent: ns-3 (applications/model/http-client.cc)" << CRLF;
+    requestSS << "Accept-Encoding: identity" << CRLF; // no compression, gzip, etc... allowed
+    requestSS << "Connection: keep-alive" << CRLF << CRLF;
+
+    std::string requestString = requestSS.str();
+
+    uint8_t* buffer = (uint8_t*)requestString.c_str();
+    Ptr<Packet> p = Create<Packet> (buffer, requestString.length());
 
     m_socket_svr->Send (p);
   }

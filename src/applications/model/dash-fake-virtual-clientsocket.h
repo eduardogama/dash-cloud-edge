@@ -21,7 +21,8 @@ class Address;
 class DashFakeVirtualClientSocket
 {
 public:
-  DashFakeVirtualClientSocket(std::map<std::string, long>& fileSizes, std::string& mpdFile, uint64_t socket_id, Ptr<Socket> socket, Ptr< Node > node, std::string m_remoteCDN, Callback<void, uint64_t> finished_callback);
+  DashFakeVirtualClientSocket(std::map<std::string, long>& fileSizes, std::string& mpdFile, uint64_t socket_id,
+    Ptr<Socket> socket, Ptr< Node > node, std::string m_remoteCDN, std::string m_hostName, Callback<void, uint64_t> finished_callback);
   virtual ~DashFakeVirtualClientSocket();
 
   void TryEstablishConnection();
@@ -81,6 +82,7 @@ protected:
 
   std::string m_fileToRequest;
   std::string m_remoteCDN;
+  std::string m_hostName;
   std::string m_activeRecvString;
 
   std::map<std::string,long>& m_fileSizes;

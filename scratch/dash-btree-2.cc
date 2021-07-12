@@ -40,7 +40,7 @@ NS_LOG_COMPONENT_DEFINE ("DashBTreeBMobility");
 int main (int argc, char *argv[])
 {
   NetworkTopology network;
-  std::map<string, string> serverTableList;
+  std::map<pair<string, int>, string> serverTableList;
 	unsigned n_ap = 0, n_clients = 1;
   unsigned dst_server = 7;
 
@@ -371,7 +371,7 @@ int main (int argc, char *argv[])
 
     Ptr<Application> app = clientNode->GetApplication(0);
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
-    serverTableList[strIpv4Bst] = strIpv4Server;
+    serverTableList[{strIpv4Bst,1}] = strIpv4Server;
 
     fileMobility << clientNode->GetId() << " " << final_client << " " <<  apId
                  << " " << strIpv4Lcl << " " << strIpv4Server << endl;

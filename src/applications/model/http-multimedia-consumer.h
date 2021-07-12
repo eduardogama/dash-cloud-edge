@@ -115,7 +115,6 @@ protected:
   const dash::mpd::IRepresentation* requestedRepresentation;
   unsigned requestedSegmentNr;
 
-
   unsigned m_screenWidth;
   unsigned m_screenHeight;
   unsigned m_maxBufferedSeconds; ///< \brief The maximum amount of buffered seconds

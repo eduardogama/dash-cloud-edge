@@ -97,12 +97,12 @@ public:
 
   void CancelDownload ();
 
-  void setServerTableList (std::map<std::string, std::string> *serverTableList) {
+  void setServerTableList (std::map<std::pair<std::string, int>, std::string> *serverTableList) {
     this->serverTableList = serverTableList;
   }
 
-  std::string getServerTableList (std::string server) {
-    return (*serverTableList)[server];
+  std::string getServerTableList (std::string server, int content) {
+    return (*serverTableList)[{server,content}];
   }
 
 protected:
@@ -124,7 +124,7 @@ protected:
 
   uint32_t node_id;
   std::string strNodeIpv4;
-  std::map<std::string, std::string> *serverTableList;
+  std::map<std::pair<std::string, int>, std::string> *serverTableList;
 
 protected: // callbacks/traces
   TracedCallback<Ptr<ns3::Application> /* app */, std::string /* interestName */> m_downloadStartedTrace;

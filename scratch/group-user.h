@@ -42,13 +42,14 @@ class GroupUser
 	public:
 		GroupUser() {}
 
-		GroupUser(string _id, string serverIp, unsigned from, unsigned to, Path route, EndUser *user) {
+		GroupUser(string _id, string serverIp, unsigned from, unsigned to, Path route,int content, EndUser *user) {
 			this->id       = _id;
 			this->serverIp = serverIp;
 			this->ap 			 = from;
 			this->from		 = from;
 			this->to			 = to;
 			this->route    = route;
+			this->content  = content;
 			this->users.push_back(user);
 		}
 
@@ -78,10 +79,14 @@ class GroupUser
 		void setTo(unsigned to) {this->to = to;}
 		unsigned getTo() {return this->to;}
 
+		void setContent(int c){this->content = c;}
+		int getContent(){return this->content;}
+
 	private:
 		string id;
 		Path route;
 		string serverIp;
+		int content;
 
 		vector<EndUser *> users;
 

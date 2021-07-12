@@ -207,6 +207,11 @@ Path NetworkTopology::getRoute()
 
 bool NetworkTopology::SearchRoute(unsigned s, unsigned t)
 {
+	if (s == t) {
+		route.clear();
+		route.addLinkToPath(s);
+		return true;
+	}
 	return dijkstra(s,t);
 }
 
@@ -227,28 +232,28 @@ bool NetworkTopology::dijkstra(unsigned s, unsigned t)
 	do
 	{
 		for (unsigned i = 0; i < adjList[k].size(); i++) {
-		    if (!pego[adjList[k][i]]) {
-		        if (dist[k] + 1 < dist[ adjList[k][i] ]) {
-		            prev[adjList[k][i]] = k;
-		            dist[adjList[k][i]] = dist[k] + 1;
-		        }
-		    }
+	    if (!pego[adjList[k][i]]) {
+        if (dist[k] + 1 < dist[ adjList[k][i] ]) {
+          prev[adjList[k][i]] = k;
+          dist[adjList[k][i]] = dist[k] + 1;
+        }
+	    }
 		}
 
 		k = 0;
 		min = inf;
 
 		for (unsigned i = 0; i < adjList.size(); i++) {
-		    if (!pego[i] && dist[i] < min) {
-		        min = dist[i];
+	    if (!pego[i] && dist[i] < min) {
+        min = dist[i];
 				k = i;
-		    }
+	    }
 		}
 
 		pego[k] = true;
 
 		if (assegure++ >= size) //grafo disconexo
-		    return false;
+	    return false;
 
 	} while (k != s);
 

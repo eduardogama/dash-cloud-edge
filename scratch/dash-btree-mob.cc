@@ -40,7 +40,7 @@ NS_LOG_COMPONENT_DEFINE ("DashBTreeBMobility");
 int main (int argc, char *argv[])
 {
   NetworkTopology network;
-  std::map<string, string> serverTableList;
+  std::map<pair<string, int>, string> serverTableList;
 	unsigned n_ap = 0, n_clients = 1;
   int dst_server = 7;
 
@@ -318,6 +318,9 @@ int main (int argc, char *argv[])
 
   for (auto& client : m_clients) {
     double start = poisson();
+    int content = zipf(0.7, 100);
+
+    std::cout << content << " " << '\n';
 
     int apId             = client.second.first;
     Ptr<Node> clientNode = client.second.second;
@@ -357,34 +360,36 @@ int main (int argc, char *argv[])
 
     Ptr<Application> app = clientNode->GetApplication(0);
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
-    serverTableList[strIpv4Bst] = strIpv4Server;
+    serverTableList[{strIpv4Bst,1}] = strIpv4Server;
 
     fileMobility << clientNode->GetId() << " " << final_client << " " <<  apId
                  << " " << strIpv4Lcl << " " << strIpv4Server << endl;
 
     Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, userId);
   }
+  std::cout << '\n';
+  getchar();
   fileMobility.flush();
   fileMobility.close();
   fileUserArrive.flush();
   fileUserArrive.close();
 
 
-  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
 
   Simulator::Schedule(Seconds(0), &NodeStatistics::CalculateThroughput, &eCtrl);

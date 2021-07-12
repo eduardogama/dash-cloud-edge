@@ -1,0 +1,6 @@
+#source, destination, rate_bps, delay_ms, pkt_loss, buffersize_pkts
+7 0 400000000 15 0 500
+0 1 20000000 15 0 500
+0 2 20000000 15 0 500
+1 8 30000000 15 0 500
+2 8 30000000 15 0 500

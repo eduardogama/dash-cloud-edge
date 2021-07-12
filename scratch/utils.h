@@ -33,7 +33,8 @@ string GetCurrentWorkingDir(void)
 	return current_working_dir;
 }
 
-string CreateDir(string name) {
+string CreateDir(string name)
+{
 	if(system(string(string("mkdir -p ") + name).c_str()) != -1)
 		return name;
     return "";

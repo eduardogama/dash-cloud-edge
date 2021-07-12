@@ -565,6 +565,9 @@ void HttpClientApplication::ForceCloseSocket()
 void HttpClientApplication::HandleRead (Ptr<Socket> socket)
 {
   NS_LOG_FUNCTION(this << socket << "URL=" << m_fileToRequest);
+  std::cout << "entrou aqui IncomingDataFromServer" << '\n';
+  std::cout << m_is_first_packet << '\n';
+  std::cout << m_bytesRecv << " " << requested_content_length << '\n';
 
   if (m_finished_download) {
     fprintf(stderr, "Client(%d)::HandleRead(time=%f) Client is asked to HandleRead although it should have finished already...\n", node_id, Simulator::Now().GetSeconds());
@@ -606,27 +609,27 @@ void HttpClientApplication::HandleRead (Ptr<Socket> socket)
       m_headerReceivedTrace(this, this->m_fileToRequest, requested_content_length);
 
       // write to file
-      if (!m_outFile.empty()) {
-        // open outfile to append
-        FILE* fp = fopen(m_outFile.c_str(), "a");
-
-        fwrite(&_tmpbuffer[where], sizeof(uint8_t), packet_size-where, fp);
-
-        fclose(fp);
-      }
+      // if (!m_outFile.empty()) {
+      //   // open outfile to append
+      //   FILE* fp = fopen(m_outFile.c_str(), "a");
+      //
+      //   fwrite(&_tmpbuffer[where], sizeof(uint8_t), packet_size-where, fp);
+      //
+      //   fclose(fp);
+      // }
 
     } else {
       m_bytesRecv += packet_size;
 
       // write to file
-      if (!m_outFile.empty()) {
-        // open outfile to append
-        FILE* fp = fopen(m_outFile.c_str(), "a");
-
-        fwrite(_tmpbuffer, sizeof(uint8_t), packet_size, fp);
-
-        fclose(fp);
-      }
+      // if (!m_outFile.empty()) {
+      //   // open outfile to append
+      //   FILE* fp = fopen(m_outFile.c_str(), "a");
+      //
+      //   fwrite(_tmpbuffer, sizeof(uint8_t), packet_size, fp);
+      //
+      //   fclose(fp);
+      // }
     }
 
 

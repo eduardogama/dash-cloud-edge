@@ -17,7 +17,6 @@ namespace ns3
 {
 
 
-
 HttpServerFakeClientSocket::HttpServerFakeClientSocket(uint64_t socket_id,
     std::string contentDir,
     std::map<std::string /* filename */, long /* file size */>& fileSizes,
@@ -324,7 +323,7 @@ HttpServerFakeClientSocket::HandleReadyToTransmit(Ptr<Socket> socket, uint32_t t
     }
     return;
   }
-  //fprintf(stderr, "Server(%ld)::HandleReadyToTransmit(socket,txSize=%u)\n", m_socket_id, txSize);
+  // fprintf(stderr, "Server(%ld)::HandleReadyToTransmit(socket,txSize=%u)\n", m_socket_id, txSize);
 
 
   // get txSize bytes from m_bytesToTransmit, starting at byte m_currentBytesTx
@@ -361,9 +360,8 @@ HttpServerFakeClientSocket::HandleReadyToTransmit(Ptr<Socket> socket, uint32_t t
     }
 
     int amountSent = socket->Send (replyPacket);
-    if (amountSent <= 0)
-    {
-      // fprintf(stderr, "Server(%ld): failed to transmit %d bytes, waiting for next transmit...\n", m_socket_id, remainingBytes);
+    if (amountSent <= 0) {
+      fprintf(stderr, "Server(%ld): failed to transmit %d bytes, waiting for next transmit...\n", m_socket_id, remainingBytes);
       // we will be called again, when new TX space becomes available;
       return;
     }

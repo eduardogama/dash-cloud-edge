@@ -40,7 +40,7 @@ NS_LOG_COMPONENT_DEFINE ("DashBTreeMain");
 int main (int argc, char *argv[])
 {
   NetworkTopology network;
-  std::map<string, string> serverTableList;
+  std::map<pair<string, int>, string> serverTableList;
 	unsigned n_ap = 0, n_clients = 1;
   int dst_server = 7;
 
@@ -338,7 +338,7 @@ int main (int argc, char *argv[])
       app->GetObject<HttpClientDashApplication> ()->setServerTableList(&serverTableList);
 
       string str_ipv4_client = Ipv4AddressToString(node_clients.Get(j)->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
-      serverTableList[str_ipv4_client] = str_ipv4_server;
+      serverTableList[{str_ipv4_client,1}] = str_ipv4_server;
 
       startTime.push_back(t);
   	}

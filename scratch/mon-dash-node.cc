@@ -48,7 +48,7 @@ int main (int argc, char *argv[])
   //Register packet receptions to calculate throughput
   NodeStatistics eCtrl = NodeStatistics(&network, 2);
 
-  std::map<string, string> serverTableList;
+  std::map<pair<string, int>, string> serverTableList;
 	unsigned n_ap = 0, n_clients = 1;
   int dst_server = 2;
 
@@ -318,7 +318,7 @@ int main (int argc, char *argv[])
       Ptr<Application> app = node_clients.Get(j)->GetApplication(0);
       app->GetObject<HttpClientDashApplication> ()->setServerTableList(&serverTableList);
 
-      serverTableList[str_ipv4_client] = str_ipv4_server;
+      serverTableList[{str_ipv4_client,1}] = str_ipv4_server;
 
       cout << "user id=" << node_clients.Get(j)->GetId() << " user ip=" << str_ipv4_client
       << " server=" << str_ipv4_server << " ap=" << ap.first << endl;

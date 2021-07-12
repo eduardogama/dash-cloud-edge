@@ -40,7 +40,7 @@ NS_LOG_COMPONENT_DEFINE ("DashBTreeRedirect");
 int main (int argc, char *argv[])
 {
   NetworkTopology network;
-  std::map<string, string> serverTableList;
+  std::map<pair<string, int>, string> serverTableList;
 	unsigned n_ap = 0, n_clients = 1;
   int dst_server = 7;
 
@@ -362,7 +362,7 @@ int main (int argc, char *argv[])
 
     Ptr<Application> app = clientNode->GetApplication(0);
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
-    serverTableList[str_ipv4_client] = str_ipv4_server;
+    serverTableList[{str_ipv4_client,1}] = str_ipv4_server;
 
     Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, userId);
   }

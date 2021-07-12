@@ -163,12 +163,12 @@ void NodeStatistics::CalculateThroughput()
     setLinkMap(iplink, 0);
 
     if ((mbs > this->linkCapacityMap[iplink]) && toRedirect) {
-    // if (mbs > 5) {
+    // if ((mbs > 4) && toRedirect) {
       int actualNode = this->linkNodesMap[iplink].first;
       int nextNode   = this->linkNodesMap[iplink].second;
 
-      // std::cout << "Troughput "<< mbs << " > 5 =======" << '\n';
       // std::cout << iplink << "=" << actualNode << "," << nextNode << '\n';
+      // getchar();
       this->controller->RedirectUsers(actualNode, nextNode);
     }
   }

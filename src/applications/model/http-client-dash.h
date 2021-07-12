@@ -57,8 +57,8 @@ public:
   HttpClientDashApplication();
   virtual ~HttpClientDashApplication();
 
-  void setServerTableList (std::map<std::string, std::string> *serverTableList);
-  string getServerTableList (std::string server);
+  void setServerTableList (std::map<std::pair<std::string, int>, std::string> *serverTableList);
+  string getServerTableList (std::string server, int content);
 
 protected:
 
@@ -138,7 +138,9 @@ private:
 protected:
 
   uint32_t node_id;
+  uint32_t m_contentId;
   string   strNodeIpv4;
+
 
   TracedCallback<Ptr<ns3::Application>, std::string> m_downloadStartedTrace;
   TracedCallback<Ptr<ns3::Application>, std::string, long> m_headerReceivedTrace;
@@ -159,7 +161,7 @@ protected:
 
   double lastDownloadBitrate;
 
-  map<string, string> *serverTableList;
+  map<pair<string, int>, string> *serverTableList;
 
 private:
   uint8_t* _tmpbuffer;

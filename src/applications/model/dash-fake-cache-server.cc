@@ -162,7 +162,7 @@ bool DASHFakeCacheServer::ConnectionRequested (Ptr<Socket> socket, const Address
 {
   NS_LOG_FUNCTION (this << socket << address);
   NS_LOG_DEBUG (Simulator::Now () << " Socket = " << socket << " " << " Server: ConnectionRequested");
-  
+
   return true;
 }
 
@@ -173,7 +173,7 @@ void DASHFakeCacheServer::ConnectionAccepted (Ptr<Socket> socket, const Address&
   uint64_t socket_id = RegisterSocket(socket);
 
   m_activeClients[socket_id] = new DashFakeVirtualClientSocket(m_fileSizes,
-                  mpdFile, socket_id, socket, GetNode(), m_remoteCDN,
+                  mpdFile, socket_id, socket, GetNode(), m_remoteCDN, m_hostName,
                   MakeCallback(&DASHFakeCacheServer::FinishedCallback, this));
 
   // set callbacks for this socket to be in HttpServerFakeClientSocket class

@@ -50,6 +50,10 @@ HttpClientDashApplication::GetTypeId (void)
                    BooleanValue(false),
                    MakeBooleanAccessor(&HttpClientDashApplication::m_keepAlive),
                    MakeBooleanChecker())
+    .AddAttribute("ContentId", "Content video of the screen",
+                   UintegerValue(1),
+                   MakeUintegerAccessor(&HttpClientDashApplication::m_contentId),
+                   MakeUintegerChecker<uint32_t>())
     .AddTraceSource("FileDownloadFinished", "Trace called every time a download finishes",
                    MakeTraceSourceAccessor(&HttpClientDashApplication::m_downloadFinishedTrace),
                    "bla")
@@ -254,7 +258,7 @@ void HttpClientDashApplication::DoSendGetRequest (Ptr<Socket> localSocket, uint3
 {
   NS_LOG_FUNCTION (this);
 
-  string hostname = getServerTableList(strNodeIpv4);
+  string hostname = getServerTableList(strNodeIpv4, m_contentId);
   if (m_hostName != hostname ) {
     fprintf(stderr, "Client(%d,%s): Old Hostname = %s new Hostname = %s\n", node_id, strNodeIpv4.c_str(), m_hostName.c_str(), hostname.c_str());
 
@@ -340,6 +344,10 @@ void HttpClientDashApplication::DoSendGetRequest (Ptr<Socket> localSocket, uint3
 void HttpClientDashApplication::HandleRead (Ptr<Socket> socket)
 {
   NS_LOG_FUNCTION(this << socket << "URL=" << m_fileToRequest);
+
+  // std::cout << "entrou aqui IncomingDataFromServer" << '\n';
+  // std::cout << m_is_first_packet << '\n';
+  // std::cout << m_bytesRecv << " " << requested_content_length << '\n';
 
   if (m_finished_download) {
     fprintf(stderr, "Client(%d)::HandleRead(time=%f) Client is asked to HandleRead although it should have finished already...\n", node_id, Simulator::Now().GetSeconds());
@@ -508,14 +516,14 @@ void HttpClientDashApplication::OnFileReceived(unsigned status, unsigned length)
   m_downloadFinishedTrace(this, this->m_fileToRequest, downloadSpeed, milliSeconds);
 }
 
-void HttpClientDashApplication::setServerTableList (std::map<std::string, std::string> *serverTableList)
+void HttpClientDashApplication::setServerTableList (std::map<std::pair<std::string, int>, std::string> *serverTableList)
 {
   this->serverTableList = serverTableList;
 }
 
-string HttpClientDashApplication::getServerTableList (std::string server)
+string HttpClientDashApplication::getServerTableList (std::string server, int content)
 {
-  return (*serverTableList)[server];
+  return (*serverTableList)[{server, content}];
 }
 
 void HttpClientDashApplication::SetRemote (Address ip, uint16_t port)

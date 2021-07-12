@@ -40,9 +40,7 @@ class Path {
 		//actualPos representa o indice no vector
 		unsigned actualPos;
 		vector<unsigned> path;
-
 };
-
 
 Path::Path(unsigned maxLength)
 {
@@ -69,11 +67,6 @@ unsigned Path::getActualStep(void)
 	return path[actualPos];
 }
 
-void Path::goLastLink(void)
-{
-    actualPos = path.size() - 2;
-}
-
 unsigned Path::getNextStep(void)
 {
 	return path[actualPos + 1];
@@ -82,6 +75,11 @@ unsigned Path::getNextStep(void)
 void Path::goAhead(void)
 {
 	actualPos++;
+}
+
+void Path::goLastLink(void)
+{
+    actualPos = path.size() - 2;
 }
 
 bool Path::isEndPath(void) const

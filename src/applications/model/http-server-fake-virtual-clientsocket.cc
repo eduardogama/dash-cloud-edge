@@ -67,8 +67,7 @@ void HttpServerFakeVirtualClientSocket::FinishedIncomingData(Ptr<Socket> socket,
     uint8_t tmp[4096];
 
     if (std::find(m_virtualFiles.begin(), m_virtualFiles.end(), filename) != m_virtualFiles.end()) {
-      // handle virtual payload
-      // fill tmp with some random data
+      // handle virtual payload fill tmp with some random data
       fprintf(stderr, "VirtualServer(%ld): Generating virtual payload with size %ld ...\n", m_socket_id, filesize);
       for (int i = 0; i < 4096; i++) {
         tmp[i] = (uint8_t)rand();
