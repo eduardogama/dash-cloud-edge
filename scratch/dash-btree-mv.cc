@@ -359,9 +359,8 @@ int main (int argc, char *argv[])
   ofstream fileUserArrive;
   fileUserArrive.open("UserArrive", ios::out);
 
-  double aux = 0.8;
   for (auto& client : m_clients) {
-    double start = aux += 0.5;
+    double start = poisson();
     int content = zipf(0.7, 10);
 
     int apId             = client.second.first;
