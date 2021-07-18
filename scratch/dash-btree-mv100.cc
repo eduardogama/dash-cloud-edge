@@ -35,7 +35,7 @@
 using namespace ns3;
 
 
-NS_LOG_COMPONENT_DEFINE ("DashBTreeBMv");
+NS_LOG_COMPONENT_DEFINE ("DashBTreeBMv100");
 
 int main (int argc, char *argv[])
 {
@@ -67,7 +67,7 @@ int main (int argc, char *argv[])
 
   cmd.Parse (argc, argv);
 
-  string dir = CreateDir("../DashBTreeBMv-" + to_string(seed));
+  string dir = CreateDir("../DashBTreeBMv100-" + to_string(seed));
 
   string filePath = dir + "/Troughput_" + to_string(seed) + "_";
   NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, true);
@@ -277,7 +277,7 @@ int main (int argc, char *argv[])
   }
 
 	// %%%%%%%%%%%% Set up the DASH server
-  int contentN = 10;
+  int contentN = 100;
 	string representationStrings = OutputVideos(1,contentN);
   BindVideosToNode(dst_server,1,contentN);
 
@@ -295,8 +295,8 @@ int main (int argc, char *argv[])
   serverApps.Stop (Seconds(stopTime));
 
   for (size_t i = 3; i < nodes.GetN(); i++) {
-    representationStrings = OutputVideos(8,10);
-    BindVideosToNode(i,8,10);
+    representationStrings = OutputVideos(80,100);
+    BindVideosToNode(i,80,100);
 
     Ptr<Node> edgeServer = nodes.Get(i);
     string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
@@ -310,8 +310,8 @@ int main (int argc, char *argv[])
   }
 
   for (size_t i = 1; i < 3; i++) {
-    representationStrings = OutputVideos(5,10);
-    BindVideosToNode(i,5,10);
+    representationStrings = OutputVideos(50,100);
+    BindVideosToNode(i,50,100);
 
     Ptr<Node> edgeServer = nodes.Get(i);
     string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
@@ -325,8 +325,8 @@ int main (int argc, char *argv[])
   }
 
   for (size_t i = 0; i < 1; i++) {
-    representationStrings = OutputVideos(2,10);
-    BindVideosToNode(i,2,10);
+    representationStrings = OutputVideos(20,100);
+    BindVideosToNode(i,20,100);
 
     Ptr<Node> edgeServer = nodes.Get(i);
     string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
@@ -359,10 +359,9 @@ int main (int argc, char *argv[])
   ofstream fileUserArrive;
   fileUserArrive.open(dir + string("/UserConnectionStatus"), ios::out);
 
-  fileUserArrive << "NodeId userId apId userIp ServerIp content" << endl;
   for (auto& client : m_clients) {
     double start = poisson();
-    int content = zipf(0.7, 10);
+    int content = zipf(0.7, 100);
 
     int apId             = client.second.first;
     Ptr<Node> clientNode = client.second.second;
