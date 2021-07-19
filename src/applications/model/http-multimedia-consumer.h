@@ -151,7 +151,7 @@ protected:
   EventId m_downloadEventTimer;
 
   TracedCallback<Ptr<Application>, unsigned, unsigned, string, unsigned,
-                unsigned, unsigned, vector<string>> m_playerTracer;
+                unsigned, unsigned, string /*vector<string>*/> m_playerTracer;
 
 };
 

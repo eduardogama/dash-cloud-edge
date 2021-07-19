@@ -24,7 +24,7 @@ string OutputVideos(int start, int n)
   return representationStrings;
 }
 
-void BindVideosToNode(int idNode,int start, int contentN)
+void BindVideosToNode(int idNode,int start, unsigned contentN)
 {
   for (size_t i = start; i <= contentN; i++) {
     contentVideoToNodes[idNode].push_back(i);

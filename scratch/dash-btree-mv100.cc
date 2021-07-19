@@ -402,6 +402,7 @@ int main (int argc, char *argv[])
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
     serverTableList[{strIpv4Bst, content}] = strIpv4Server;
 
+
     fileUserArrive << clientNode->GetId() << " " << final_client << " " << apId << " " << strIpv4Lcl << " " << strIpv4Server << " " << content << endl;
     fileMobility   << clientNode->GetId() << " " << final_client << " " << apId << " " << strIpv4Lcl << " " << strIpv4Server << endl;
 

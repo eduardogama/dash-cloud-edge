@@ -221,7 +221,7 @@ void MultimediaConsumer<Parent>::StopApplication() // Called at time specified b
 
       //ok check how many segments we have not consumed
       while (totalConsumedSegments < mPlayer->GetAdaptationLogic()->getTotalSegments()) {
-        m_playerTracer(this, m_userId, totalConsumedSegments++,  "0", 0, 0, 0, std::vector<std::string>());
+        m_playerTracer(this, m_userId, totalConsumedSegments++,  "0", 0, 0, 0, super::m_hostName);//std::vector<std::string>());
       }
     }
   }
@@ -625,7 +625,7 @@ double MultimediaConsumer<Parent>::consume()
     }
 
     //fprintf(stderr,  "Current Buffer Level: %f\n", mPlayer->GetBufferLevel());
-    m_playerTracer(this, this->m_userId, entry.segmentNumber, entry.repId, entry.experienced_bitrate_bit_s, freezeTime, (unsigned) (this->mPlayer->GetBufferLevel()), entry.depIds);
+    m_playerTracer(this, this->m_userId, entry.segmentNumber, entry.repId, entry.experienced_bitrate_bit_s, freezeTime, (unsigned) (this->mPlayer->GetBufferLevel()), super::m_hostName);//entry.depIds);
 
     this->totalConsumedSegments++;
     return consumedSeconds;

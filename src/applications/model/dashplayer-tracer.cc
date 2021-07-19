@@ -176,28 +176,30 @@ void DASHPlayerTracer::PrintHeader(std::ofstream& os) const
      << "\t"
      << "StallingTime(msec)"
      << "\t"
-     << "SegmentDepIds";
+     // << "SegmentDepIds"
+     << "HostName";
 }
 
 void DASHPlayerTracer::ConsumeStats(Ptr<ns3::Application> app, unsigned int userId,
                                    unsigned int segmentNr, std::string representationId,
                                    unsigned int segmentExperiencedBitrate,
                                    unsigned int stallingTime, unsigned int bufferLevel,
-                                   std::vector<std::string> dependencyIds)
+                                   // std::vector<std::string> dependencyIds,
+                                   string hostName)
 {
-  std::string depIdStr = "";
-
-  for(std::vector<std::string>::iterator it = dependencyIds.begin(); it != dependencyIds.end(); it++ )
-  {
-    if(depIdStr.compare ("") == 0)
-      depIdStr.append(*it);
-    else
-      depIdStr.append (","+*it);
-  }
+  // std::string depIdStr = "";
+  //
+  // for(std::vector<std::string>::iterator it = dependencyIds.begin(); it != dependencyIds.end(); it++ )
+  // {
+  //   if(depIdStr.compare ("") == 0)
+  //     depIdStr.append(*it);
+  //   else
+  //     depIdStr.append (","+*it);
+  // }
 
   (*m_os) << Simulator::Now().ToDouble(Time::S) << "\t" << m_node << "\t" << userId << "\t" /*<< app->GetId() << "\t"*/
         << segmentNr << "\t" << representationId << "\t"
-        << segmentExperiencedBitrate << "\t" << bufferLevel << "\t" << stallingTime << "\t" << depIdStr << "\n";
+        << segmentExperiencedBitrate << "\t" << bufferLevel << "\t" << stallingTime << "\t" << hostName << "\n" ;//depIdStr << "\n";
 }
 
 } // namespace ns3
