@@ -42,7 +42,9 @@ def build(bld):
         'helper/aggregation-helper.cc',
         'model/dash-fake-cache-server.cc',
         'model/dash-fake-virtual-clientsocket.cc',
-        'helper/dash-cache-server-helper.cc'
+        'helper/dash-cache-server-helper.cc',
+        'model/edge-dash-fake-server.cc',
+        'helper/edge-dash-server-helper.cc'
         ]
 
     applications_test = bld.create_ns3_module_test_library('applications')
@@ -92,7 +94,9 @@ def build(bld):
         'helper/aggregation-helper.h',
         'model/dash-fake-cache-server.h',
         'model/dash-fake-virtual-clientsocket.h',
-        'helper/dash-cache-server-helper.h'
+        'helper/dash-cache-server-helper.h',
+        'model/edge-dash-fake-server.h',
+        'helper/edge-dash-server-helper.h'
         ]
 
     if (bld.env['ENABLE_EXAMPLES']):

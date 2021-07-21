@@ -35,15 +35,16 @@
 using namespace ns3;
 
 
-NS_LOG_COMPONENT_DEFINE ("DashBTreeLinkCapacity");
+NS_LOG_COMPONENT_DEFINE ("DashBTreeBMv100");
 
 int main (int argc, char *argv[])
 {
   NetworkTopology network;
-  std::map<pair<string, int>, string> serverTableList;
+  std::map<pair<string,int>, string> serverTableList;
 	unsigned n_ap = 0, n_clients = 1;
   int dst_server = 7;
 
+  //Register packet receptions to calculate throughput
 
 	string scenarioFiles = GetCurrentWorkingDir() + "/../content/scenario";
 	string requestsFile = "requests";
@@ -64,26 +65,24 @@ int main (int argc, char *argv[])
   cmd.AddValue("seed", "Seed experiment.", seed);
   cmd.AddValue("Client", "Number of clients per AP.", n_clients);
 
-	cmd.Parse (argc, argv);
+  cmd.Parse (argc, argv);
 
-  string dir = CreateDir("../DashBTreeLinkCapacity-Seed" + to_string(seed));
+  string dir = CreateDir("../DashBTreeBBotUp-" + to_string(seed));
+
   string filePath = dir + "/Troughput_" + to_string(seed) + "_";
-
-  //Register packet receptions to calculate throughput
-  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath);
+  NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, true);
 
   Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
   Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
+
 
   ReadTopology(scenarioFiles + "/btree_l3_link", scenarioFiles + "/btree_l3_nodes", network);
 
 	NS_LOG_INFO ("Create Nodes");
 
 	NodeContainer nodes; // Declare nodes objects
-  // NodeContainer cache_nodes;
 
   nodes.Create(network.getNodes().size());
-  // cache_nodes.Create(network.getNodes().size());
 
 	cout << "Node size = " << network.getNodes().size() << endl;
 	for (unsigned int i = 0; i < network.getNodes().size(); i += 1) {
@@ -137,18 +136,18 @@ int main (int argc, char *argv[])
 
     string stripv4 = Ipv4AddressToString(srcipv4->GetAddress(same_bcst, 0).GetBroadcast());
     eCtrl.setLinkMap(stripv4, 0);
-    eCtrl.setLinkCapacityMap(stripv4, srcnode, dstnode, datarate);
+    eCtrl.setLinkCapacityMap(stripv4, srcnode, dstnode, datarate/1000000);
     eCtrl.createTroughputFile(stripv4, srcnode, dstnode);
 	}
 
 	//Store IP adresses
-	std::string addr_file = "addresses";
+	std::string addr_file = dir + "addresses";
 	ofstream out_addr_file(addr_file.c_str());
 	for (unsigned int i = 0; i < nodes.GetN(); i++) {
 		Ptr<Node> n = nodes.Get(i);
 		Ptr<Ipv4> ipv4 = n->GetObject<Ipv4>();
 		for (uint32_t l = 1; l < ipv4->GetNInterfaces(); l++) {
-			out_addr_file << i <<  " " << ipv4->GetAddress(l, 0).GetLocal() << endl;
+			out_addr_file << i << " " << ipv4->GetAddress(l, 0).GetLocal() << endl;
 		}
 	}
 	out_addr_file.flush();
@@ -278,31 +277,76 @@ int main (int argc, char *argv[])
   }
 
 	// %%%%%%%%%%%% Set up the DASH server
-	Ptr<Node> n_server = nodes.Get(dst_server);
+  int contentN = 10;
+	string representationStrings = OutputVideos(1,contentN);
+  BindVideosToNode(dst_server,1,contentN);
 
-	string representationStrings = GetCurrentWorkingDir() + "/../content/representations/netflix_vid2.csv";
 	fprintf(stderr, "representations = %s\n", representationStrings.c_str ());
+  getchar();
 
-	string str_ipv4_server = Ipv4AddressToString(n_server->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+  Ptr<Node> cloudServer = nodes.Get(dst_server);
+  string strIpv4Server = Ipv4AddressToString(cloudServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
-  DASHServerHelper server(Ipv4Address::GetAny (), 80, str_ipv4_server,
-                          "/content/mpds/", representationStrings, "/content/segments/");
+  DASHServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Server,
+  "/content/mpds/", representationStrings, "/content/segments/");
 
-  ApplicationContainer serverApps = server.Install(n_server);
-	serverApps.Start (Seconds(0.0));
-	serverApps.Stop (Seconds(stopTime));
+  ApplicationContainer serverApps = edgeServerCache.Install(cloudServer);
+  serverApps.Start (Seconds(0.0));
+  serverApps.Stop (Seconds(stopTime));
+
+  for (size_t i = 3; i < nodes.GetN(); i++) {
+    representationStrings = GetCurrentWorkingDir() + "/../content/representations/netflix_vid1.csv";
+    AddCapacityNode(i, 3);
+
+    Ptr<Node> edgeServer = nodes.Get(i);
+    string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+
+    EdgeDashServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
+                            "/content/mpds/", representationStrings, "/content/segments/");
+
+    ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
+    serverApps.Start (Seconds(0.0));
+    serverApps.Stop (Seconds(stopTime));
+  }
+
+  for (size_t i = 1; i < 3; i++) {
+    representationStrings = GetCurrentWorkingDir() + "/../content/representations/netflix_vid1.csv";
+    AddCapacityNode(i, 6);
+
+    Ptr<Node> edgeServer = nodes.Get(i);
+    string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+
+    EdgeDashServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
+                            "/content/mpds/", representationStrings, "/content/segments/");
+
+    ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
+    serverApps.Start (Seconds(0.0));
+    serverApps.Stop (Seconds(stopTime));
+  }
+
+  for (size_t i = 0; i < 1; i++) {
+    representationStrings = GetCurrentWorkingDir() + "/../content/representations/netflix_vid1.csv";
+    AddCapacityNode(i, 9);
+
+    Ptr<Node> edgeServer = nodes.Get(i);
+    string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+
+    EdgeDashServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
+                            "/content/mpds/", representationStrings, "/content/segments/");
+
+    ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
+    serverApps.Start (Seconds(0.0));
+    serverApps.Stop (Seconds(stopTime));
+  }
 
   //=======================================================================================
   network.setNodeContainers(&nodes);
   network.setClientContainers(&clients);
 
   Ptr<DashController> controller = CreateObject<DashController> ();
-  // n_server->AddApplication(controller);
 
-  controller->Setup(&network, str_ipv4_server, Ipv4Address::GetAny (), 1317);
+  controller->Setup(&network, strIpv4Server, Ipv4Address::GetAny (), 1317);
   controller->SetServerTableList(&serverTableList);
-  // controller->SetStartTime(Seconds(0.0));
-  // controller->SetStopTime(Seconds(stopTime));
 
   eCtrl.setNodes(&nodes);
   eCtrl.setController(controller);
@@ -310,22 +354,29 @@ int main (int argc, char *argv[])
 
   Ipv4GlobalRoutingHelper::PopulateRoutingTables();
 
+  ofstream fileMobility;
+  fileMobility.open("UsersConnection", ios::out);
+  ofstream fileUserArrive;
+  fileUserArrive.open(dir + string("/UserConnectionStatus"), ios::out);
+
   for (auto& client : m_clients) {
     double start = poisson();
+    int content = zipf(0.7, contentN);
 
     int apId             = client.second.first;
     Ptr<Node> clientNode = client.second.second;
 
-    int final_client = 100 * apId + client.first;
+    int userId = client.first;
+    int final_client = 100 * apId + userId;
 
     int screenWidth = 1920;
     int screenHeight = 1080;
 
     stringstream mpd_baseurl;
-    mpd_baseurl << "http://" << str_ipv4_server << "/content/mpds/";
+    mpd_baseurl << "http://" << strIpv4Server << "/content/mpds/";
 
     stringstream ssMPDURL;
-    ssMPDURL << mpd_baseurl.str() << "vid" << 2 << ".mpd.gz";
+    ssMPDURL << mpd_baseurl.str() << "vid" << content << ".mpd.gz";
 
     DASHHttpClientHelper player(ssMPDURL.str());
     player.SetAttribute("AdaptationLogic", StringValue(AdaptationLogicToUse));
@@ -336,46 +387,60 @@ int main (int argc, char *argv[])
     player.SetAttribute("AllowDownscale", BooleanValue(true));
     player.SetAttribute("AllowUpscale", BooleanValue(true));
     player.SetAttribute("MaxBufferedSeconds", StringValue("60"));
+    player.SetAttribute("ContentId", UintegerValue(content));
 
     ApplicationContainer clientApps;
     clientApps = player.Install(clientNode);
     clientApps.Start(Seconds(start));
     clientApps.Stop(Seconds(stopTime));
 
-    string str_ipv4_client = Ipv4AddressToString(clientNode->GetObject<Ipv4>()->GetAddress(1,0).GetBroadcast());
+    string strIpv4Lcl = Ipv4AddressToString(clientNode->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+    string strIpv4Bst = Ipv4AddressToString(clientNode->GetObject<Ipv4>()->GetAddress(1,0).GetBroadcast());
 
-    cout << "user id=" << clientNode->GetId() << " user ip=" << str_ipv4_client << " server=" << str_ipv4_server << " ap=" << apId << endl;
 
     Ptr<Application> app = clientNode->GetApplication(0);
     app->GetObject<HttpClientDashApplication>()->setServerTableList(&serverTableList);
-    serverTableList[{str_ipv4_client,1}] = str_ipv4_server;
+    serverTableList[{strIpv4Bst, content}] = strIpv4Server;
 
-    // Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, 1, clientNode->GetId());
+
+    fileUserArrive << clientNode->GetId() << " " << final_client << " " << apId << " " << strIpv4Lcl << " " << strIpv4Server << " " << content << endl;
+    fileMobility   << clientNode->GetId() << " " << final_client << " " << apId << " " << strIpv4Lcl << " " << strIpv4Server << endl;
+
+    Simulator::Schedule(Seconds(start), &DashController::AddUserInGroup, controller, apId, dst_server, content, userId);
   }
+  std::cout << '\n';
+
+  fileMobility.flush();
+  fileMobility.close();
+
+  fileUserArrive.flush();
+  fileUserArrive.close();
+
+
+  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
+                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
+
   Simulator::Schedule(Seconds(0), &NodeStatistics::CalculateThroughput, &eCtrl);
 
 
-  Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
-                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
-                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/2/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
-                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/3/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
-                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/4/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
-                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/5/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
-                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/6/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
-                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-  Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacRx",
-                  MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
-
 	// %%%%%%%%%%%% sort out the simulation
-	// AnimationInterface anim(dir + string("/topology.netanim"));
+	AnimationInterface anim(dir + string("/topology.netanim"));
 
-	DASHPlayerTracer::InstallAll(dir + string("/topology-") + to_string(seed) + string(".csv"));
+	DASHPlayerTracer::InstallAll(dir + string("/topology.csv"));
 
 	Simulator::Stop(Seconds(stopTime));
 	Simulator::Run();

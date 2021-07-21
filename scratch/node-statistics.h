@@ -169,7 +169,7 @@ void NodeStatistics::CalculateThroughput()
 
       // std::cout << iplink << "=" << actualNode << "," << nextNode << '\n';
       // getchar();
-      this->controller->RedirectUsers(actualNode, nextNode);
+      this->controller->RedirectUsersTwo(actualNode, nextNode);
     }
   }
 

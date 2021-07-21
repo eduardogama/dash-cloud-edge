@@ -7,7 +7,8 @@
 using namespace std;
 
 
-
+map<int, int> capacityNodes;
+map<int, int> assignedNodes;
 map<int, vector<int>> contentVideoToNodes;
 
 string OutputVideos(int start, int n)
@@ -39,4 +40,26 @@ bool hasVideoByNode(int idNode, int content)
     }
   }
   return false;
+}
+
+void AddCapacityNode(int idNode, int capacity)
+{
+  capacityNodes[idNode] = capacity;
+  assignedNodes[idNode] = 0;
+}
+
+bool VideoAssignment(int idNode, int content)
+{
+  if (assignedNodes[idNode] < capacityNodes[idNode]) {
+    assignedNodes[idNode]++;
+    BindVideosToNode(idNode,content,content);
+
+    return true;
+  }
+
+  return false;
+}
+
+string getVideoPath(int idVideo) {
+  return "content/representations/vid" + std::to_string(idVideo) + ".csv";
 }

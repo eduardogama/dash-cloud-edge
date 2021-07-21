@@ -26,8 +26,10 @@ class Path {
 		unsigned getActualStep(void);
 		unsigned getNextStep(void);
 		void goAhead(void);
+		void goBack(void);
 		void goLastLink(void);
 		bool isEndPath(void) const;
+		bool isStartPath(void) const;
 		void clear();
 
 		friend std::ostream &operator<<(std::ostream &os, const Path &path);
@@ -41,6 +43,7 @@ class Path {
 		unsigned actualPos;
 		vector<unsigned> path;
 };
+
 
 Path::Path(unsigned maxLength)
 {
@@ -67,6 +70,11 @@ unsigned Path::getActualStep(void)
 	return path[actualPos];
 }
 
+void Path::goLastLink(void)
+{
+  actualPos = path.size() - 2;
+}
+
 unsigned Path::getNextStep(void)
 {
 	return path[actualPos + 1];
@@ -77,9 +85,9 @@ void Path::goAhead(void)
 	actualPos++;
 }
 
-void Path::goLastLink(void)
+void Path::goBack(void)
 {
-    actualPos = path.size() - 2;
+	actualPos--;
 }
 
 bool Path::isEndPath(void) const
@@ -87,26 +95,32 @@ bool Path::isEndPath(void) const
 	return (actualPos >= path.size()-1);
 }
 
-void Path::clear()
+bool Path::isStartPath(void) const
 {
-    length = from = to = actualPos = 0;
-    path.clear();
+	return (actualPos == 0);
 }
 
-ostream &operator<<(ostream &os, const Path &path)
+void Path::clear()
 {
-    Path p = path;
-    p.goStart();
-    int l = p.getLength();
-    if (l==0)
-    {
-        os << "Path: empty";
-        return os;
-    }
-    os << "Path: ";
-    for ( int i = 0 ; i < l - 1 ; i++,p.goAhead())
-        os << p.getActualStep() << " -> ";
-    os << p.getTo();
-    return os;
+  length = from = to = actualPos = 0;
+  path.clear();
 }
+
+std::ostream &operator<<(std::ostream &os, const Path &path)
+{
+  Path p = path;
+  p.goStart();
+  int l = p.getLength();
+  if (l==0)
+  {
+    os << "Path: empty";
+    return os;
+  }
+  os << "Path: ";
+  for ( int i = 0 ; i < l - 1 ; i++,p.goAhead())
+    os << p.getActualStep() << "->";
+  os << p.getTo();
+  return os;
+}
+
 #endif // PATH_H

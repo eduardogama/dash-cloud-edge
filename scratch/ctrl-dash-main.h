@@ -51,6 +51,8 @@ public:
 	void DoSendRedirect ();
 
 	void RedirectUsers(unsigned actualNode, unsigned nextNode);
+	void RedirectUsersTwo(unsigned actualNode, unsigned nextNode);
+
 	void DoRedirectUsers(unsigned i, unsigned nextNode, int content);
 
 	void CacheJoinAssignment(unsigned from, unsigned to);
@@ -409,6 +411,57 @@ GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int conten
 	return groups[groups.size() - 1];
 }
 
+void DashController::RedirectUsersTwo(unsigned actualNode, unsigned nextNode)
+{
+	for (unsigned i = 0; i < this->groups.size(); i++) {
+		Path path   = this->groups[i]->getRoute();
+		int content = this->groups[i]->getContent();
+
+		unsigned actual = actualNode;
+		unsigned next   = nextNode;
+
+		bool findedLink = false;
+		path.goStart();
+		while (!path.isEndPath()) {
+			if (path.getActualStep() == actual && path.getNextStep() == next) {
+				findedLink = true;
+				break;
+			}
+			path.goAhead();
+		}
+
+		if (findedLink) {
+			path.goLastLink();
+
+			actual = path.getActualStep();
+			next   = path.getNextStep();
+
+			while (!path.isStartPath() && (next != actualNode)) {
+
+				if (hasVideoByNode(next, content)) {
+					DoRedirectUsers(i, next, content);
+					break;
+				}
+				if (VideoAssignment(next, content)) {
+					string strContent = getVideoPath(content);
+
+					Ptr<Application> app = network->getNodeContainers()->Get(next)->GetApplication(0);
+			    app->GetObject<EdgeDashFakeServerApplication>()->AddVideo(strContent);
+
+					DoRedirectUsers(i, next, content);
+					break;
+				}
+
+				path.goBack();
+				actual = path.getActualStep();
+				next   = path.getNextStep();
+			}
+		}
+	}
+
+	printGroups();
+}
+
 void DashController::RedirectUsers(unsigned actualNode, unsigned nextNode)
 {
 
@@ -423,7 +476,6 @@ void DashController::RedirectUsers(unsigned actualNode, unsigned nextNode)
 			if (path.getActualStep() == actual && path.getNextStep() == next) {
 
 				int content = this->groups[i]->getContent();
-				// std::cout << "entroua qui" << '\n';
 				// std::cout << content << '\n';
 				// std::cout << "has Content " << content << " in Node group(" << groups[i]->getId() << "," << groups[i]->getContent() << ")=" << hasVideoByNode(next, content) << '\n';
 

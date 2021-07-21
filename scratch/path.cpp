@@ -27,7 +27,7 @@ unsigned Path::getActualStep(void)
 
 void Path::goLastLink(void)
 {
-    actualPos = path.size() - 2;
+  actualPos = path.size() - 2;
 }
 
 unsigned Path::getNextStep(void)
@@ -40,30 +40,40 @@ void Path::goAhead(void)
 	actualPos++;
 }
 
+void Path::goBack(void)
+{
+	actualPos--;
+}
+
 bool Path::isEndPath(void) const
 {
 	return (actualPos >= path.size()-1);
 }
 
+bool Path::isStartPath(void) const
+{
+	return (actualPos == 0);
+}
+
 void Path::clear()
 {
-    length = from = to = actualPos = 0;
-    path.clear();
+  length = from = to = actualPos = 0;
+  path.clear();
 }
 
 std::ostream &operator<<(std::ostream &os, const Path &path)
 {
-    Path p = path;
-    p.goStart();
-    int l = p.getLength();
-    if (l==0)
-    {
-        os << "Path: empty";
-        return os;
-    }
-    os << "Path: ";
-    for ( int i = 0 ; i < l - 1 ; i++,p.goAhead())
-        os << p.getActualStep() << "->";
-    os << p.getTo();
+  Path p = path;
+  p.goStart();
+  int l = p.getLength();
+  if (l==0)
+  {
+    os << "Path: empty";
     return os;
+  }
+  os << "Path: ";
+  for ( int i = 0 ; i < l - 1 ; i++,p.goAhead())
+    os << p.getActualStep() << "->";
+  os << p.getTo();
+  return os;
 }

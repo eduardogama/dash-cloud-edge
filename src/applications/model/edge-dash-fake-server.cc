@@ -42,78 +42,77 @@
 
 #include <stdio.h>
 
-#include "dash-fake-server.h"
+#include "edge-dash-fake-server.h"
 
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE ("DASHFakeServerApplication");
+NS_LOG_COMPONENT_DEFINE ("EdgeDashFakeServerApplication");
 
-NS_OBJECT_ENSURE_REGISTERED (DASHFakeServerApplication);
-
+NS_OBJECT_ENSURE_REGISTERED (EdgeDashFakeServerApplication);
 
 
 
 
 TypeId
-DASHFakeServerApplication::GetTypeId (void)
+EdgeDashFakeServerApplication::GetTypeId (void)
 {
-  static TypeId tid = TypeId ("ns3::DASHFakeServerApplication")
+  static TypeId tid = TypeId ("ns3::EdgeDashFakeServerApplication")
     .SetParent<Application> ()
     .SetGroupName("Applications")
-    .AddConstructor<DASHFakeServerApplication> ()
+    .AddConstructor<EdgeDashFakeServerApplication> ()
     .AddAttribute ("ListeningAddress",
                    "The listening Address for the inbound packets",
                    AddressValue (),
-                   MakeAddressAccessor (&DASHFakeServerApplication::m_listeningAddress),
+                   MakeAddressAccessor (&EdgeDashFakeServerApplication::m_listeningAddress),
                    MakeAddressChecker ())
     .AddAttribute ("Port", "Port on which we listen for incoming packets (default: 80).",
                    UintegerValue (80),
-                   MakeUintegerAccessor (&DASHFakeServerApplication::m_port),
+                   MakeUintegerAccessor (&EdgeDashFakeServerApplication::m_port),
                    MakeUintegerChecker<uint16_t> ())
-    .AddAttribute("MPDDirectory", "The directory which DASHFakeServerApplication fakes to serves the MPD files",
+    .AddAttribute("MPDDirectory", "The directory which EdgeDashFakeServerApplication fakes to serves the MPD files",
                    StringValue("/"),
-                   MakeStringAccessor(&DASHFakeServerApplication::m_mpdDirectory),
+                   MakeStringAccessor(&EdgeDashFakeServerApplication::m_mpdDirectory),
                    MakeStringChecker())
     .AddAttribute("RepresentationsMetaDataFiles", "The meta data csv file(s) containing the videos and representations this server will serve",
                    StringValue("./representations.csv"),
-                   MakeStringAccessor(&DASHFakeServerApplication::m_mpdMetaDataFiles),
+                   MakeStringAccessor(&EdgeDashFakeServerApplication::m_mpdMetaDataFiles),
                    MakeStringChecker())
     .AddAttribute("RepresentationsSegmentsDirectory", "The directory that virtual segments of representations are served",
                    StringValue("/"),
-                   MakeStringAccessor(&DASHFakeServerApplication::m_metaDataContentDirectory),
+                   MakeStringAccessor(&EdgeDashFakeServerApplication::m_metaDataContentDirectory),
                    MakeStringChecker())
     .AddAttribute("Hostname", "The (virtual) hostname of this server",
                    StringValue("localhost"),
-                   MakeStringAccessor(&DASHFakeServerApplication::m_hostName),
+                   MakeStringAccessor(&EdgeDashFakeServerApplication::m_hostName),
                    MakeStringChecker())
     .AddTraceSource("ThroughputTracer", "Trace Throughput statistics of this server",
-                      MakeTraceSourceAccessor(&DASHFakeServerApplication::m_throughputTrace), "bla")
+                      MakeTraceSourceAccessor(&EdgeDashFakeServerApplication::m_throughputTrace), "bla")
                     ;
   ;
   return tid;
 }
 
 
-DASHFakeServerApplication::DASHFakeServerApplication ()
+EdgeDashFakeServerApplication::EdgeDashFakeServerApplication ()
 {
   NS_LOG_FUNCTION (this);
 }
 
-DASHFakeServerApplication::~DASHFakeServerApplication()
+EdgeDashFakeServerApplication::~EdgeDashFakeServerApplication()
 {
   NS_LOG_FUNCTION (this);
   m_socket = 0;
 }
 
 void
-DASHFakeServerApplication::DoDispose (void)
+EdgeDashFakeServerApplication::DoDispose (void)
 {
   NS_LOG_FUNCTION (this);
   Application::DoDispose ();
 }
 
-std::string DASHFakeServerApplication::ImportDASHRepresentations (std::string mpdMetaDataFilename, int video_id) /* mpd string */
+std::string EdgeDashFakeServerApplication::ImportDASHRepresentations (std::string mpdMetaDataFilename, int video_id) /* mpd string */
 {
   NS_LOG_FUNCTION(mpdMetaDataFilename << video_id);
 // read m_mpdMetaDataFiles and fill m_fileSizes
@@ -128,16 +127,6 @@ std::string DASHFakeServerApplication::ImportDASHRepresentations (std::string mp
   int number_of_segments = 0;
 
   std::string line;
-
-  /*** this is an example of how the file looks like:
-  segmentDuration=2
-  numberOfSegments=1800
-  reprId,screenWidth,screenHeight,bitrate
-  1,640,360,317
-  2,640,360,399
-  10,960,540,755
-  31,1920,1080,624
-*/
 
   // get first line: segmentDuration
   std::getline(infile,line);
@@ -238,7 +227,7 @@ std::string DASHFakeServerApplication::ImportDASHRepresentations (std::string mp
   return mpdData.str();
 }
 
-void DASHFakeServerApplication::ReportStats()
+void EdgeDashFakeServerApplication::ReportStats()
 {
   uint64_t bytes_recv = m_bytes_recv - m_last_bytes_recv;
   uint64_t bytes_sent = m_bytes_sent - m_last_bytes_sent;
@@ -249,24 +238,24 @@ void DASHFakeServerApplication::ReportStats()
   m_last_bytes_sent = m_bytes_sent;
 
   if (m_active) {
-    m_reportStatsTimer = Simulator::Schedule(Seconds(1.0), &DASHFakeServerApplication::ReportStats, this);
+    m_reportStatsTimer = Simulator::Schedule(Seconds(1.0), &EdgeDashFakeServerApplication::ReportStats, this);
   }
 }
 
 // this traces the acutal packet size, including header etc...
-void DASHFakeServerApplication::TxTrace(Ptr<Packet const> packet)
+void EdgeDashFakeServerApplication::TxTrace(Ptr<Packet const> packet)
 {
   m_bytes_sent += packet->GetSize();
 }
 
 // this traces the acutal packet size, including header etc...
 
-void DASHFakeServerApplication::RxTrace(Ptr<Packet const> packet)
+void EdgeDashFakeServerApplication::RxTrace(Ptr<Packet const> packet)
 {
   m_bytes_recv += packet->GetSize();
 }
 
-void DASHFakeServerApplication::StartApplication (void)
+void EdgeDashFakeServerApplication::StartApplication (void)
 {
   NS_LOG_FUNCTION (this);
 
@@ -275,8 +264,8 @@ void DASHFakeServerApplication::StartApplication (void)
   m_active = true;
 
   Ptr<NetDevice> netdevice = GetNode()->GetDevice(0);
-  netdevice->TraceConnectWithoutContext("PhyTxEnd", MakeCallback(&DASHFakeServerApplication::TxTrace, this));
-  netdevice->TraceConnectWithoutContext("PhyRxEnd", MakeCallback(&DASHFakeServerApplication::RxTrace, this));
+  netdevice->TraceConnectWithoutContext("PhyTxEnd", MakeCallback(&EdgeDashFakeServerApplication::TxTrace, this));
+  netdevice->TraceConnectWithoutContext("PhyRxEnd", MakeCallback(&EdgeDashFakeServerApplication::RxTrace, this));
 
   m_last_bytes_recv = 0;
   m_last_bytes_sent = 0;
@@ -317,65 +306,12 @@ void DASHFakeServerApplication::StartApplication (void)
   NS_ASSERT (m_socket != 0);
 
   // And make sure to handle requests and accepted connections
-  m_socket->SetAcceptCallback (MakeCallback(&DASHFakeServerApplication::ConnectionRequested, this),
-      MakeCallback(&DASHFakeServerApplication::ConnectionAccepted, this)
+  m_socket->SetAcceptCallback (MakeCallback(&EdgeDashFakeServerApplication::ConnectionRequested, this),
+      MakeCallback(&EdgeDashFakeServerApplication::ConnectionAccepted, this)
   );
-
-  // parse m_mpdMetaDataFiles, could be comma separated list
-  std::vector<std::string> metaDataRepresentations;
-  size_t pos = m_mpdMetaDataFiles.find(",");
-
-  if (pos == std::string::npos) {
-    // parse one file
-    metaDataRepresentations.push_back(m_mpdMetaDataFiles);
-  } else {
-    // parse multiple files
-    size_t start_pos = 0;
-    std::string parseString = m_mpdMetaDataFiles;
-    while (pos != std::string::npos)
-    {
-      std::string tmpStr = parseString.substr(start_pos, pos);
-
-      metaDataRepresentations.push_back(tmpStr);
-
-      parseString = parseString.substr(pos+1);
-      pos = parseString.find(",");
-    }
-
-    std::string tmpStr = parseString;
-
-    metaDataRepresentations.push_back(tmpStr);
-  }
-
-  // parse all files in metaDataRepresentations
-  for (std::vector<std::string>::iterator it = metaDataRepresentations.begin(); it != metaDataRepresentations.end(); ++it)
-  {
-    int pos1 = it->find("vid") + 3;
-    int pos2 = it->find(".csv");
-    int video_id = std::stoi(it->substr(pos1, pos2 - pos1));
-
-    std::string mmm = *it;
-    std::string mpdData = ImportDASHRepresentations(mmm, video_id);
-
-    // compress
-    std::string compressedMpdData = zlib_compress_string(mpdData);
-    fprintf(stderr, "Size of compressed = %ld, uncompressed = %ld\n", compressedMpdData.length(), mpdData.length());
-
-    std::stringstream SSMpdFilename;
-
-    SSMpdFilename << m_mpdDirectory << "vid" << video_id << ".mpd.gz";
-
-    m_fileSizes[SSMpdFilename.str()] = compressedMpdData.size();
-
-    fprintf(stderr, "Adding '%s' to m_fileSizes with size %ld\n", SSMpdFilename.str().c_str(), compressedMpdData.size());
-
-    m_mpdFileContents[SSMpdFilename.str()] = compressedMpdData;
-  }
-
-  ReportStats();
 }
 
-void DASHFakeServerApplication::StopApplication ()
+void EdgeDashFakeServerApplication::StopApplication ()
 {
   NS_LOG_FUNCTION (this);
 
@@ -385,19 +321,45 @@ void DASHFakeServerApplication::StopApplication ()
   }
 }
 
-void DASHFakeServerApplication::OnReadySend(Ptr<Socket> socket, unsigned int txSize)
+void EdgeDashFakeServerApplication::AddVideo(std::string video)
+{
+  int pos1 = video.find("vid") + 3;
+  int pos2 = video.find(".csv");
+  int video_id = std::stoi(video.substr(pos1, pos2 - pos1));
+
+  std::string mmm = video;
+  std::string mpdData = ImportDASHRepresentations(mmm, video_id);
+
+  // compress
+  std::string compressedMpdData = zlib_compress_string(mpdData);
+  fprintf(stderr, "Size of compressed = %ld, uncompressed = %ld\n", compressedMpdData.length(), mpdData.length());
+
+  std::stringstream SSMpdFilename;
+
+  SSMpdFilename << m_mpdDirectory << "vid" << video_id << ".mpd.gz";
+
+  m_fileSizes[SSMpdFilename.str()] = compressedMpdData.size();
+
+  fprintf(stderr, "Adding '%s' to m_fileSizes with size %ld\n", SSMpdFilename.str().c_str(), compressedMpdData.size());
+
+  m_mpdFileContents[SSMpdFilename.str()] = compressedMpdData;
+
+  ReportStats();
+}
+
+void EdgeDashFakeServerApplication::OnReadySend(Ptr<Socket> socket, unsigned int txSize)
 {
   fprintf(stderr, "Server says it is ready to send something now...\n");
 }
 
-bool DASHFakeServerApplication::ConnectionRequested (Ptr<Socket> socket, const Address& address)
+bool EdgeDashFakeServerApplication::ConnectionRequested (Ptr<Socket> socket, const Address& address)
 {
   NS_LOG_FUNCTION (this << socket << address);
   NS_LOG_DEBUG (Simulator::Now () << " Socket = " << socket << " " << " Server: ConnectionRequested");
   return true;
 }
 
-void DASHFakeServerApplication::ConnectionAccepted (Ptr<Socket> socket, const Address& address)
+void EdgeDashFakeServerApplication::ConnectionAccepted (Ptr<Socket> socket, const Address& address)
 {
   NS_LOG_FUNCTION (this << socket << address);
   fprintf(stderr, "DASH Fake Server(%s): Connection Accepted!\n", m_hostName.c_str());
@@ -405,7 +367,7 @@ void DASHFakeServerApplication::ConnectionAccepted (Ptr<Socket> socket, const Ad
   uint64_t socket_id = RegisterSocket(socket);
 
   m_activeClients[socket_id] = new HttpServerFakeVirtualClientSocket(socket_id, "/", m_fileSizes, m_virtualFiles, m_mpdFileContents,
-                  MakeCallback(&DASHFakeServerApplication::FinishedCallback, this));
+                  MakeCallback(&EdgeDashFakeServerApplication::FinishedCallback, this));
 
   NS_LOG_DEBUG (socket << " " << Simulator::Now () << " Successful socket id : " << socket_id << " Connection Accepted From " << address);
 
@@ -421,14 +383,14 @@ void DASHFakeServerApplication::ConnectionAccepted (Ptr<Socket> socket, const Ad
                              MakeCallback (&HttpServerFakeVirtualClientSocket::ConnectionClosedError,  m_activeClients[socket_id]));
 }
 
-void DASHFakeServerApplication::FinishedCallback (uint64_t socket_id)
+void EdgeDashFakeServerApplication::FinishedCallback (uint64_t socket_id)
 {
   // create timer to finish this, because if we do it in here, we will crash the app
-  Simulator::Schedule(Seconds(1.0), &DASHFakeServerApplication::DoFinishSocket, this, socket_id);
-  // DASHFakeServerApplication::DoFinishSocket(socket_id);
+  Simulator::Schedule(Seconds(1.0), &EdgeDashFakeServerApplication::DoFinishSocket, this, socket_id);
+  // EdgeDashFakeServerApplication::DoFinishSocket(socket_id);
 }
 
-void DASHFakeServerApplication::DoFinishSocket(uint64_t socket_id)
+void EdgeDashFakeServerApplication::DoFinishSocket(uint64_t socket_id)
 {
   if (m_activeClients.find(socket_id) != m_activeClients.end()) {
     // std::cout << "ENTROU DoFinishSocket\n";
@@ -440,7 +402,7 @@ void DASHFakeServerApplication::DoFinishSocket(uint64_t socket_id)
   }
 }
 
-uint64_t DASHFakeServerApplication::RegisterSocket (Ptr<Socket> socket)
+uint64_t EdgeDashFakeServerApplication::RegisterSocket (Ptr<Socket> socket)
 {
   this->m_activeSockets[socket] = this->m_lastSocketID;
   return this->m_lastSocketID++;
