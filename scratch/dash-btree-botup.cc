@@ -35,7 +35,7 @@
 using namespace ns3;
 
 
-NS_LOG_COMPONENT_DEFINE ("DashBTreeBMv100");
+NS_LOG_COMPONENT_DEFINE ("DashBTreeBBotUp");
 
 int main (int argc, char *argv[])
 {
