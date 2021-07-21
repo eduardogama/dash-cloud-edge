@@ -141,7 +141,7 @@ int main (int argc, char *argv[])
 	}
 
 	//Store IP adresses
-	std::string addr_file = dir + "addresses";
+	std::string addr_file = dir + "/addresses";
 	ofstream out_addr_file(addr_file.c_str());
 	for (unsigned int i = 0; i < nodes.GetN(); i++) {
 		Ptr<Node> n = nodes.Get(i);
