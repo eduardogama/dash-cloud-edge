@@ -1,6 +1,15 @@
 
 ## The Network Simulator, Version 3
 
+## Installing Procedure
+
+* Install Pre-Requesits for ns-3
+* Install Pre-Requesits for AMuSt-libdash
+* Install Pre-Requesits for Gurobi Optimizer
+* Clone all relevant git repositories
+* Build AMuSt-libdash
+* Build ns-3 with dash-cloud-edge
+
 
 ## How to build:
 
