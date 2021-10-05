@@ -250,7 +250,11 @@ def options(opt):
                    dest='enable_desmetrics')
     opt.add_option('--cxx-standard',
                    help=('Compile NS-3 with the given C++ standard'),
-                   type='string', default='-std=c++11', dest='cxx_standard')
+                   type='string', default='-std=c++11', dest='cxx_standard')    
+#    opt.add_option('--with_gurobi',
+#                   help=('Gurobi path - assuming ../gurobi912'
+#                   		 '  - should contain the following subfoulders: linux64/include/, linux64/lib/'),
+#                   default=False, dest='with_gurobi')
 
     # options provided in subdirectories
     opt.recurse('src')
@@ -657,6 +661,7 @@ def configure(conf):
 
     # for compiling C code, copy over the CXX* flags
     conf.env.append_value('CCFLAGS', conf.env['CXXFLAGS'])
+    conf.env.append_value("LINKFLAGS", ["-I/home/eduardo/gurobi912/linux64/include", "-L/home/eduardo/gurobi912/linux64/lib", "-lgurobi_c++", "-lgurobi91"])
 
     def add_gcc_flag(flag):
         if env['COMPILER_CXX'] == 'g++' and 'CXXFLAGS' not in os.environ:
@@ -778,7 +783,7 @@ def add_examples_programs(bld):
 
 def add_scratch_programs(bld):
     all_modules = [mod[len("ns3-"):] for mod in bld.env['NS3_ENABLED_MODULES'] + bld.env['NS3_ENABLED_CONTRIBUTED_MODULES']]
-
+    
     try:
         for filename in os.listdir("scratch"):
             if filename.startswith('.') or filename == 'CVS':

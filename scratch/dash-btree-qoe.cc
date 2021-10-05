@@ -35,7 +35,7 @@
 using namespace ns3;
 
 
-NS_LOG_COMPONENT_DEFINE ("DashBTreeBBotUp100");
+NS_LOG_COMPONENT_DEFINE ("DashBTreeQoE");
 
 int main (int argc, char *argv[])
 {
@@ -217,15 +217,15 @@ int main (int argc, char *argv[])
     }
   }
 
-  positionAlloc->Add(Vector(1150, 15, 0));   // Ap 0
-	positionAlloc->Add(Vector(11250, 15, 0));  // Ap 1
-	positionAlloc->Add(Vector(11150, 30, 0)); // router 2
-	positionAlloc->Add(Vector(11150, 45, 0)); // router 3
+  positionAlloc->Add(Vector(50, 15, 0));   // Ap 0
+	positionAlloc->Add(Vector(250, 15, 0));  // Ap 1
+	positionAlloc->Add(Vector(150, 30, 0)); // router 2
+	positionAlloc->Add(Vector(150, 45, 0)); // router 3
 
-  positionAlloc->Add(Vector(1150, 15, 0));   // Ap 0
-	positionAlloc->Add(Vector(11250, 15, 0));  // Ap 1
-	positionAlloc->Add(Vector(11150, 30, 0)); // router 2
-	positionAlloc->Add(Vector(11150, 45, 0)); // router 3
+  positionAlloc->Add(Vector(50, 15, 0));   // Ap 0
+	positionAlloc->Add(Vector(250, 15, 0));  // Ap 1
+	positionAlloc->Add(Vector(150, 30, 0)); // router 2
+	positionAlloc->Add(Vector(150, 45, 0)); // router 3
 
 
   mobility.SetPositionAllocator(positionAlloc);

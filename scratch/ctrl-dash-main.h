@@ -11,7 +11,6 @@
 
 #include "group-user.h"
 
-
 using namespace ns3;
 using namespace std;
 
@@ -42,7 +41,6 @@ public:
 	void SetServerTableList(map<pair<string, int>, string> *serverTableList);
 	string getServerTableList(string server, int content);
 
-
 	TypeOpt tryRequest (unsigned from, unsigned to, int content, int userId);
 
 	void RunController ();
@@ -52,6 +50,9 @@ public:
 
 	void RedirectUsers(unsigned actualNode, unsigned nextNode);
 	void RedirectUsersTwo(unsigned actualNode, unsigned nextNode);
+
+	void RTMgmtMechanism(unsigned actualNode, unsigned nextNode);
+	void ILPSolution(unsigned actualNode, unsigned nextNode);
 
 	void DoRedirectUsers(unsigned i, unsigned nextNode, int content);
 
@@ -395,7 +396,7 @@ GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int conten
   for (auto& group : groups) {
     string strGroupAddr = group->getId();
 
-		if (strIpv4Bst == strGroupAddr && content == group->getContent()) {
+		if (strIpv4Bst == strGroupAddr /*=&& content == group->getContent()*/) {
     	group->addUser(new_user);
 			return group;
 		}
@@ -462,9 +463,75 @@ void DashController::RedirectUsersTwo(unsigned actualNode, unsigned nextNode)
 	printGroups();
 }
 
+
+void DashController::RTMgmtMechanism(unsigned actualNode, unsigned nextNode)
+{
+	for (unsigned i = 0; i < this->groups.size(); i++) {
+		Path path   = this->groups[i]->getRoute();
+		int content = this->groups[i]->getContent();
+
+		unsigned actual = actualNode;
+		unsigned next   = nextNode;
+
+		bool findedLink = false;
+		path.goStart();
+		while (!path.isEndPath()) {
+			if (path.getActualStep() == actual && path.getNextStep() == next) {
+				findedLink = true;
+				break;
+			}
+			path.goAhead();
+		}
+
+		if (findedLink) {
+
+		}
+	}
+	printGroups();
+}
+
+void DashController::ILPSolution(unsigned actualNode, unsigned nextNode)
+{
+	std::ostringstream buffer;
+
+	for (unsigned i = 0; i < this->groups.size(); i++) {
+		buffer << this->groups[i]->getAp() << " "
+					 << i << " "
+					 << this->groups[i]->getUsers().size() << " ";
+	}
+
+	std:string cmd("python3.7 ../ILP-QoE/cflp-main.py " + buffer.str());
+
+	system(cmd.c_str());
+
+	string line;
+	ifstream ilpSolution("out.txt");
+
+	while (getline (ilpSolution, line)) {
+		vector<string> vals = str_split(line, " ");
+
+		int groupId = ::stoi(vals[0]);
+		int serverId = ::stoi(vals[1]);
+		// cout << vals[0] << ' ' << vals[1] << '\n';
+
+		int content = this->groups[groupId]->getContent();
+
+		if (hasVideoByNode(serverId, content)) {
+			DoRedirectUsers(groupId, serverId, content);
+		} else if (VideoAssignment(serverId, content)) {
+			string strContent = getVideoPath(content);
+
+			Ptr<Application> app = network->getNodeContainers()->Get(serverId)->GetApplication(0);
+			app->GetObject<EdgeDashFakeServerApplication>()->AddVideo(strContent);
+
+			DoRedirectUsers(groupId, serverId, content);
+		}
+	}
+	ilpSolution.close();
+}
+
 void DashController::RedirectUsers(unsigned actualNode, unsigned nextNode)
 {
-
 	for (unsigned i = 0; i < this->groups.size(); i++) {
 		Path path = this->groups[i]->getRoute();
 

@@ -116,8 +116,9 @@ int main()
   return 0;
 }
 '''
-
+	
     conf.env.append_value('NS3_MODULE_PATH',os.path.abspath(os.path.join(conf.env['WITH_DASH'], 'build/bin/')))
+#    conf.env.append_value("LINKFLAGS", ["-I/home/eduardo/gurobi912/linux64/include", "-L/home/eduardo/gurobi912/linux64/lib", "-lgurobi_c++", "-lgurobi91"])
 
     conf.env['INCLUDES_DASH'] = os.path.join(conf.env['WITH_DASH'], "libdash/include/")
     conf.env['LIBPATH_DASH'] = [ os.path.join(conf.env['WITH_DASH'], "build/bin/") ]
