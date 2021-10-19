@@ -396,7 +396,7 @@ GroupUser* DashController::AddUserInGroup(unsigned from, unsigned to, int conten
   for (auto& group : groups) {
     string strGroupAddr = group->getId();
 
-		if (strIpv4Bst == strGroupAddr /*=&& content == group->getContent()*/) {
+		if (strIpv4Bst == strGroupAddr && content == group->getContent()) {
     	group->addUser(new_user);
 			return group;
 		}
