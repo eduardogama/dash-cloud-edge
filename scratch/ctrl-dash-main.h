@@ -463,44 +463,18 @@ void DashController::RedirectUsersTwo(unsigned actualNode, unsigned nextNode)
 	printGroups();
 }
 
-
-void DashController::RTMgmtMechanism(unsigned actualNode, unsigned nextNode)
-{
-	for (unsigned i = 0; i < this->groups.size(); i++) {
-		Path path   = this->groups[i]->getRoute();
-		int content = this->groups[i]->getContent();
-
-		unsigned actual = actualNode;
-		unsigned next   = nextNode;
-
-		bool findedLink = false;
-		path.goStart();
-		while (!path.isEndPath()) {
-			if (path.getActualStep() == actual && path.getNextStep() == next) {
-				findedLink = true;
-				break;
-			}
-			path.goAhead();
-		}
-
-		if (findedLink) {
-
-		}
-	}
-	printGroups();
-}
-
 void DashController::ILPSolution(unsigned actualNode, unsigned nextNode)
 {
 	std::ostringstream buffer;
-
+	buffer << this->groups.size() << " ";
 	for (unsigned i = 0; i < this->groups.size(); i++) {
 		buffer << this->groups[i]->getAp() << " "
+					 << i + 8 << " "
 					 << i << " "
 					 << this->groups[i]->getUsers().size() << " ";
 	}
 
-	std:string cmd("python3.7 ../ILP-QoE/cflp-main.py " + buffer.str());
+	std:string cmd("python3.7 ../ILP-QoE/cflp-2.py " + buffer.str());
 
 	system(cmd.c_str());
 
@@ -528,6 +502,32 @@ void DashController::ILPSolution(unsigned actualNode, unsigned nextNode)
 		}
 	}
 	ilpSolution.close();
+}
+
+void DashController::RTMgmtMechanism(unsigned actualNode, unsigned nextNode)
+{
+	for (unsigned i = 0; i < this->groups.size(); i++) {
+		Path path   = this->groups[i]->getRoute();
+		int content = this->groups[i]->getContent();
+
+		unsigned actual = actualNode;
+		unsigned next   = nextNode;
+
+		bool findedLink = false;
+		path.goStart();
+		while (!path.isEndPath()) {
+			if (path.getActualStep() == actual && path.getNextStep() == next) {
+				findedLink = true;
+				break;
+			}
+			path.goAhead();
+		}
+
+		if (findedLink) {
+
+		}
+	}
+	printGroups();
 }
 
 void DashController::RedirectUsers(unsigned actualNode, unsigned nextNode)
