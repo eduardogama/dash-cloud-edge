@@ -19,7 +19,7 @@ public:
 
   void CheckStatistics (double time);
 
-  void RateCallback(std::string context, Ptr<const Packet> packet);
+  void RateCallback(string context, Ptr<const Packet> packet);
 
   void CalculateThroughput();
 
