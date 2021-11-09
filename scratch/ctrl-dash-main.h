@@ -467,6 +467,7 @@ void DashController::ILPSolution(unsigned actualNode, unsigned nextNode)
 {
 	std::ostringstream buffer;
 	buffer << this->groups.size() << " ";
+	buffer << actualNode << " " << nextNode << " ";
 	for (unsigned i = 0; i < this->groups.size(); i++) {
 		buffer << this->groups[i]->getAp() << " "
 					 << i + 8 << " "
