@@ -661,7 +661,6 @@ def configure(conf):
 
     # for compiling C code, copy over the CXX* flags
     conf.env.append_value('CCFLAGS', conf.env['CXXFLAGS'])
-    conf.env.append_value("LINKFLAGS", ["-I/home/eduardo/gurobi912/linux64/include", "-L/home/eduardo/gurobi912/linux64/lib", "-lgurobi_c++", "-lgurobi91"])
 
     def add_gcc_flag(flag):
         if env['COMPILER_CXX'] == 'g++' and 'CXXFLAGS' not in os.environ:
