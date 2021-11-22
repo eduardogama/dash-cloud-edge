@@ -51,7 +51,7 @@ int main (int argc, char *argv[])
 	string DashTraceFile = "report.csv";
 	string ServerThroughputTraceFile = "server_throughput.csv";
 	string RepresentationType = "netflix";
-	string AdaptationLogicToUse = "dash::player::RateAndBufferBasedAdaptationLogic";
+	string AdaptationLogicToUse = "RateAndBufferBasedAdaptationLogic";
 
 	int stopTime = 30;
 	int seed = 0;
@@ -65,9 +65,11 @@ int main (int argc, char *argv[])
   cmd.AddValue("seed", "Seed experiment.", seed);
   cmd.AddValue("Client", "Number of clients per AP.", n_clients);
 
+
   cmd.Parse (argc, argv);
 
   string dir = CreateDir("../DashBTreeBBotUp-" + to_string(seed));
+  AdaptationLogicToUse = "dash::player::" + AdaptationLogicToUse;
 
   string filePath = dir + "/Troughput_" + to_string(seed) + "_";
   NodeStatistics eCtrl = NodeStatistics(&network, 2, filePath, true);
