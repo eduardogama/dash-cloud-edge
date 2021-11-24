@@ -54,6 +54,8 @@ public:
 	void RTMgmtMechanism(unsigned actualNode, unsigned nextNode);
 	void ILPSolution(unsigned actualNode, unsigned nextNode);
 
+	std::string GenRandom(const int len);
+
 	void DoRedirectUsers(unsigned i, unsigned nextNode, int content);
 
 	void CacheJoinAssignment(unsigned from, unsigned to);
@@ -463,9 +465,27 @@ void DashController::RedirectUsersTwo(unsigned actualNode, unsigned nextNode)
 	printGroups();
 }
 
+std::string DashController::GenRandom(const int len) {
+	static const char alphanum[] =
+	    "0123456789"
+	    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	    "abcdefghijklmnopqrstuvwxyz";
+	std::string tmp_s;
+	tmp_s.reserve(len);
+
+	for (int i = 0; i < len; ++i) {
+  	tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
+	}
+
+	return tmp_s;
+}
+
 void DashController::ILPSolution(unsigned actualNode, unsigned nextNode)
 {
 	std::ostringstream buffer;
+
+	string output = GenRandom(6) ;
+	buffer << output << " ";
 	buffer << this->groups.size() << " ";
 	buffer << actualNode << " " << nextNode << " ";
 	for (unsigned i = 0; i < this->groups.size(); i++) {
@@ -475,14 +495,14 @@ void DashController::ILPSolution(unsigned actualNode, unsigned nextNode)
 					 << this->groups[i]->getUsers().size() << " ";
 	}
 
-	std:string cmd("python3.7 ../ILP-QoE/cflp-2.py " + buffer.str());
-
+	std:string cmd("python3.7 ../ILP-QoE/cflp-main.py " + buffer.str());
 	system(cmd.c_str());
 
 	string line;
-	ifstream ilpSolution("out.txt");
+	ifstream ilpSolution(output);
 
 	while (getline (ilpSolution, line)) {
+		std::cout << line << '\n';
 		vector<string> vals = str_split(line, " ");
 
 		int groupId = ::stoi(vals[0]);
@@ -503,6 +523,10 @@ void DashController::ILPSolution(unsigned actualNode, unsigned nextNode)
 		}
 	}
 	ilpSolution.close();
+
+	cmd = "rm " + output;
+	system(cmd.c_str());
+
 }
 
 void DashController::RTMgmtMechanism(unsigned actualNode, unsigned nextNode)

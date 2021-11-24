@@ -418,7 +418,6 @@ int main (int argc, char *argv[])
   fileUserArrive.flush();
   fileUserArrive.close();
 
-
   Config::Connect("/NodeList/0/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&NodeStatistics::RateCallback, &eCtrl));
   Config::Connect("/NodeList/1/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",

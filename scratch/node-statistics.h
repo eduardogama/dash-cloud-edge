@@ -22,6 +22,7 @@ public:
   void RateCallback(string context, Ptr<const Packet> packet);
 
   void CalculateThroughput();
+  void BandwidthEstimator();
 
   void setLinkMap(string link, double datarate);
   double getLinkMap(string link);
@@ -38,6 +39,7 @@ public:
 
   void createTroughputFile(string strip, int srcnode, int dstnode);
   void storeTroughputInFile(string strip, double mbs);
+
 private:
   Ptr<DashController> controller;
   NetworkTopology *network;
@@ -174,6 +176,31 @@ void NodeStatistics::CalculateThroughput()
   }
 
   Simulator::Schedule(Seconds(stepsTime), &NodeStatistics::CalculateThroughput, this);
+}
+
+void NodeStatistics::BandwidthEstimator()
+{
+  for (auto& link: linkMap) {
+    string iplink   = link.first;
+    double datarate = link.second;
+
+    double mbs = ((datarate * 8.0) / (1000000.0 * stepsTime));
+
+    storeTroughputInFile(iplink, mbs);
+    setLinkMap(iplink, 0);
+
+    if ((mbs > this->linkCapacityMap[iplink]) && toRedirect) {
+    // if ((mbs > 4) && toRedirect) {
+      int actualNode = this->linkNodesMap[iplink].first;
+      int nextNode   = this->linkNodesMap[iplink].second;
+
+      // std::cout << iplink << "=" << actualNode << "," << nextNode << '\n';
+      // getchar();
+      this->controller->ILPSolution(actualNode, nextNode);
+    }
+  }
+
+  Simulator::Schedule(Seconds(stepsTime), &NodeStatistics::BandwidthEstimator, this);
 }
 
 #endif //NODE_STATISTICS_H
