@@ -196,7 +196,7 @@ void NodeStatistics::BandwidthEstimator()
 
       // std::cout << iplink << "=" << actualNode << "," << nextNode << '\n';
       // getchar();
-      this->controller->ILPSolution(actualNode, nextNode);
+      this->controller->RedirectUsersTwo(actualNode, nextNode);
     }
   }
 
