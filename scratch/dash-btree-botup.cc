@@ -284,7 +284,7 @@ int main (int argc, char *argv[])
   BindVideosToNode(dst_server,1,contentN);
 
 	fprintf(stderr, "representations = %s\n", representationStrings.c_str ());
-  getchar();
+  // getchar();
 
   Ptr<Node> cloudServer = nodes.Get(dst_server);
   string strIpv4Server = Ipv4AddressToString(cloudServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
@@ -360,6 +360,7 @@ int main (int argc, char *argv[])
   fileMobility.open("UsersConnection", ios::out);
   ofstream fileUserArrive;
   fileUserArrive.open(dir + string("/UserConnectionStatus"), ios::out);
+  fileUserArrive << "NodeId UserId ApId UserIpAddress ServerIpAddress Content\n";
 
   for (auto& client : m_clients) {
     double start = poisson();
