@@ -7,7 +7,7 @@ load_dotenv()
 
 
 def start_simulation(sim_params, seed):
-    os.system('./waf --run \'dash-btree-botup --stopTime=%d --Client=%d --seed=%d --AdaptationLogicToUse=\"dash::player::%s\"\'' %
+    os.system('./waf --run \'dash-btree-botup --stopTime=%d --Client=%d --seed=%d --AdaptationLogicToUse=\'%s\'\'' %
               (sim_params['stopTime'], sim_params['users'], seed, sim_params['protocol']))
 
 
