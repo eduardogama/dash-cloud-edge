@@ -86,6 +86,14 @@ EdgeDashFakeServerApplication::GetTypeId (void)
                    StringValue("localhost"),
                    MakeStringAccessor(&EdgeDashFakeServerApplication::m_hostName),
                    MakeStringChecker())
+    .AddAttribute ("Capacity", "Capacity Server.",
+                   UintegerValue (10),
+                   MakeUintegerAccessor (&EdgeDashFakeServerApplication::m_capacity),
+                   MakeUintegerChecker<uint16_t> ())
+    .AddAttribute ("StartCapacity", "Start Capacity Server.",
+                  UintegerValue (0),
+                  MakeUintegerAccessor (&EdgeDashFakeServerApplication::assignedVideos),
+                  MakeUintegerChecker<uint16_t> ())
     .AddTraceSource("ThroughputTracer", "Trace Throughput statistics of this server",
                       MakeTraceSourceAccessor(&EdgeDashFakeServerApplication::m_throughputTrace), "bla")
                     ;
@@ -404,8 +412,61 @@ void EdgeDashFakeServerApplication::DoFinishSocket(uint64_t socket_id)
 
 uint64_t EdgeDashFakeServerApplication::RegisterSocket (Ptr<Socket> socket)
 {
-  this->m_activeSockets[socket] = this->m_lastSocketID;
-  return this->m_lastSocketID++;
+    this->m_activeSockets[socket] = this->m_lastSocketID;
+    return this->m_lastSocketID++;
+}
+
+string EdgeDashFakeServerApplication::getVideoPath(int idVideo)
+{
+    return "content/representations/vid" + to_string(idVideo) + ".csv";
+}
+
+string EdgeDashFakeServerApplication::OutputVideos(int start, int n)
+{
+    string representationStrings = "";
+    for (int i = start; i <= n; i++) {
+        representationStrings += "content/representations/vid" + to_string(i) + ".csv";
+        if (i < n) {
+            representationStrings += ",";
+        }
+    }
+
+    return representationStrings;
+}
+
+bool EdgeDashFakeServerApplication::hasVideo(int content)
+{
+    for (auto& videoId : contentVideos) {
+        if (videoId == content) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool EdgeDashFakeServerApplication::VideoAssignment(int content)
+{
+    if (assignedVideos < m_capacity) {
+        assignedVideos++;
+        BindVideos(content, content);
+
+        return true;
+    }
+
+    return false;
+}
+
+void EdgeDashFakeServerApplication::AddCapacityNode(int capacity)
+{
+    m_capacity = capacity;
+    assignedVideos = 0;
+}
+
+void EdgeDashFakeServerApplication::BindVideos(int start, unsigned contentN)
+{
+    for (size_t i = start; i <= contentN; i++) {
+        contentVideos.push_back(i);
+    }
 }
 
 }

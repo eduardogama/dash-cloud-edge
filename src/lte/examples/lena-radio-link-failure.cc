@@ -330,7 +330,8 @@ main (int argc, char *argv[])
   Config::SetDefault ("ns3::LteUePhy::EnableUplinkPowerControl", BooleanValue (true));
   Config::SetDefault ("ns3::LteUePowerControl::ClosedLoop", BooleanValue (true));
   Config::SetDefault ("ns3::LteUePowerControl::AccumulationEnabled", BooleanValue (true));
-
+	
+  
   //----frequency related----
   lteHelper->SetEnbDeviceAttribute ("DlEarfcn", UintegerValue (100)); //2120MHz
   lteHelper->SetEnbDeviceAttribute ("UlEarfcn", UintegerValue (18100)); //1930MHz

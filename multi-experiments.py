@@ -13,11 +13,11 @@ def start_simulation(sim_params, seed):
 
 def main():
     sim_params = {
-        'rep': int(os.getenv('Repetition')),
+        'cores': int(os.getenv('cores')),
         'users': int(os.getenv('Users')),  # 15
+        'rep': int(os.getenv('Repetition')),
         'stopTime': int(os.getenv('StopTime')),
         'protocol': os.getenv('AdaptationLogicToUse'),  # RateBasedAdaptationLogic RateAndBufferBasedAdaptationLogic
-        'cores': int(os.getenv('cores'))
     }
 
     print("Starting users:", sim_params['users'])

@@ -1,7 +1,7 @@
-## -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
+# -*- Mode: python; py-indent-offset: 4; indent-tabs-mode: nil; coding: utf-8; -*-
 
 def build(bld):
-    module = bld.create_ns3_module('applications', ['internet', 'config-store','stats'])
+    module = bld.create_ns3_module('applications', ['internet', 'config-store', 'stats'])
     module.use.append('DASH')
     module.source = [
         'model/bulk-send-application.cc',
@@ -44,7 +44,10 @@ def build(bld):
         'model/dash-fake-virtual-clientsocket.cc',
         'helper/dash-cache-server-helper.cc',
         'model/edge-dash-fake-server.cc',
-        'helper/edge-dash-server-helper.cc'
+        'helper/edge-dash-server-helper.cc',
+        'model/monitoring.cc',
+        'model/ctrl-main.cc',
+        'model/bigtable.cc'
         ]
 
     applications_test = bld.create_ns3_module_test_library('applications')
@@ -96,7 +99,13 @@ def build(bld):
         'model/dash-fake-virtual-clientsocket.h',
         'helper/dash-cache-server-helper.h',
         'model/edge-dash-fake-server.h',
-        'helper/edge-dash-server-helper.h'
+        'helper/edge-dash-server-helper.h',
+        'model/monitoring.h',
+        'model/ctrl-main.h',
+        'model/bigtable.h',
+        'model/group-user.h',
+        'model/path.h',
+        'model/network-graph.h'
         ]
 
     if (bld.env['ENABLE_EXAMPLES']):

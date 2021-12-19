@@ -19,7 +19,7 @@
 
 #include "string.h"
 
-#include <string>
+
 #include <stdexcept>
 #include <iostream>
 #include <iomanip>
@@ -35,6 +35,27 @@
  */
 
 namespace ns3 {
+
+std::vector<std::string> Split(const std::string& s, const std::string& delimiter, const bool& removeEmptyEntries)
+{
+    std::vector<std::string> tokens;
+
+    for (size_t start = 0, end; start < s.length(); start = end + delimiter.length()) {
+         size_t position = s.find(delimiter, start);
+         end = position != std::string::npos ? position : s.length();
+
+         std::string token = s.substr(start, end - start);
+         if (!removeEmptyEntries || !token.empty()) {
+             tokens.push_back(token);
+         }
+    }
+
+    if (!removeEmptyEntries && (s.empty() || string_ends_width(s, delimiter))) {
+        tokens.push_back("");
+    }
+
+    return tokens;
+}
 
 
 // from http://stackoverflow.com/questions/874134/find-if-string-ends-with-another-string-in-c
@@ -85,8 +106,8 @@ std::string zlib_compress_string(const std::string& str,int compressionlevel)
         oss << "Exception during zlib compression: (" << ret << ") " << zs.msg;
         throw(std::runtime_error(oss.str()));
     }
-    
-    
+
+
     return outstring;
 }
 

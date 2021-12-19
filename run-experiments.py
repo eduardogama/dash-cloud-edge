@@ -1,25 +1,25 @@
-import sys
 import os
 from dotenv import load_dotenv
 
 
 load_dotenv()
 
+
 def main():
-	
-	rep 	 = os.getenv('Repetition')
-	stopTime = os.getenv('StopTime') # 
-	users 	 = os.getenv('Users') # 10
-	protocol = os.getenv('AdaptationLogicToUse') # RateBasedAdaptationLogic RateAndBufferBasedAdaptationLogic 
 
+    rep = os.getenv('Repetition')
+    users = os.getenv('Users')  # 15
+    stopTime = os.getenv('StopTime')
+    protocol = os.getenv('AdaptationLogicToUse')  # RateBasedAdaptationLogic RateAndBufferBasedAdaptationLogic
 
-	print("Initializing ...")
+    print("Initializing ...")
 
-	for seed in range(0,rep):
-		os.system('./waf --run \'dash-btree-botup --stopTime=%d --users=%d --seed=%d --AdaptationLogicToUse=\"dash::player::%s\"\'' % (stopTime, users, seed, protocol))
+    for seed in range(0, rep):
+        os.system('./waf --run \'dash-btree-botup --stopTime=%d --users=%d --seed=%d --AdaptationLogicToUse=\"dash::player::%s\"\'' %
+                  (stopTime, users, seed, protocol))
 
-	print("Done.")
+    print("Done.")
 
 
 if __name__ == '__main__':
-	main()
+    main()

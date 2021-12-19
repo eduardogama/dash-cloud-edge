@@ -51,14 +51,14 @@ private:
 
   map<string, string> troughputFile;
 
-  bool toRedirect;
   double stepsTime;
   string pathFile;
+  bool toRedirect;
 
   NodeContainer *nodes;
 };
 
-NodeStatistics::NodeStatistics (NetworkTopology *network, double stepsTime, string pathFile, bool toRedirect)
+NodeStatistics::NodeStatistics(NetworkTopology *network, double stepsTime, string pathFile, bool toRedirect)
   : network(network), stepsTime(stepsTime), pathFile(pathFile), toRedirect(toRedirect)
 {
   // system(string(string("mkdir -p troughput")).c_str());

@@ -2,6 +2,7 @@
 #define UTILS_HH_
 
 #include "ns3/internet-module.h"
+#include "ns3/string.h"
 
 
 #include <string>
@@ -61,18 +62,63 @@ vector<string> str_split(const string& s, const string& delimiter, const bool& r
     return tokens;
 }
 
-bool ReadTopology(string linksFile, string nodesFile, NetworkTopology &net)
+template <typename T>
+bool ReadTopology(string linksFile, string nodesFile, T &net)
 {
-	ifstream links_file(linksFile.c_str());
+	// node data
+  int id;
+	string type;
+	int n=0;
 	int linecount = 0;
+	
+	ifstream nodes_file(nodesFile.c_str());
+	linecount = 0;
+	while (nodes_file) {
+		string line;
+		linecount++;
+		if (!getline(nodes_file, line)) {
+			break;
+		}
+
+		cout << line << endl;
+
+		if (linecount > 1) {
+			// Get each element of the demand
+			istringstream linestream( line );
+			int columncount = 1;
+			while (linestream) {
+				string s;
+				if (!getline( linestream, s, ' ' )) {
+					break;
+				}
+				switch (columncount) {
+					case 1:
+						id = std::atoi(s.c_str());
+						break;
+					case 2:
+						type = s;
+						break;
+				}
+				columncount++;
+			}
+			net.AddNode(id, type);
+			n++;
+		}
+	}
+	nodes_file.close();
+
+	net.SetUpAdjList(n);
+
+
+	ifstream links_file(linksFile.c_str());
 
 	// link data
-    int src_id;
-    int dst_id;
-    double rate;
-    double delay;
-    double ploss;
-    double buffersize_pkts;
+  int src_id;
+  int dst_id;
+  double rate;
+  double delay;
+  double ploss;
+  double buffersize_pkts;
 
 	while (links_file) {
 		string line;
@@ -119,52 +165,10 @@ bool ReadTopology(string linksFile, string nodesFile, NetworkTopology &net)
 				}
 				columncount++;
 			}
-			net.addLink(src_id, dst_id, rate, delay, ploss, buffersize_pkts);
+			net.AddLink(src_id, dst_id, rate, delay, ploss, buffersize_pkts);
 		}
 	}
 	links_file.close();
-
-	// node data
-  int id;
-	string type;
-
-
-	ifstream nodes_file(nodesFile.c_str());
-	linecount = 0;
-	while (nodes_file) {
-		string line;
-		linecount++;
-		if (!getline(nodes_file, line)) {
-			break;
-		}
-
-		cout << line << endl;
-
-		if (linecount > 1) {
-			// Get each element of the demand
-			istringstream linestream( line );
-			int columncount = 1;
-			while (linestream) {
-				string s;
-				if (!getline( linestream, s, ' ' )) {
-					break;
-				}
-				switch (columncount) {
-					case 1:
-						id = std::atoi(s.c_str());
-						break;
-					case 2:
-						type = s;
-						break;
-				}
-				columncount++;
-			}
-			net.addNode(id, type);
-		}
-	}
-	nodes_file.close();
-
-	net.SetUpAdjList();
 
 //	net.printAdjList();
 //	getchar();

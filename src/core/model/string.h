@@ -23,6 +23,7 @@
 #include <zlib.h>
 
 
+#include <vector>
 #include <string>
 #include "attribute-helper.h"
 
@@ -33,6 +34,9 @@
  */
 
 namespace ns3 {
+
+
+extern std::vector<std::string> Split(const std::string& s, const std::string& delimiter, const bool& removeEmptyEntries = false);
 
 extern bool string_ends_width (std::string const &fullString, std::string const &ending);
 

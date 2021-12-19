@@ -58,21 +58,17 @@ std::vector<std::string> split(const std::string& s, const std::string& delimite
 {
     std::vector<std::string> tokens;
 
-    for (size_t start = 0, end; start < s.length(); start = end + delimiter.length())
-    {
+    for (size_t start = 0, end; start < s.length(); start = end + delimiter.length()) {
          size_t position = s.find(delimiter, start);
          end = position != string::npos ? position : s.length();
 
          std::string token = s.substr(start, end - start);
-         if (!removeEmptyEntries || !token.empty())
-         {
+         if (!removeEmptyEntries || !token.empty()) {
              tokens.push_back(token);
          }
     }
 
-    if (!removeEmptyEntries &&
-        (s.empty() || endsWith(s, delimiter)))
-    {
+    if (!removeEmptyEntries && (s.empty() || endsWith(s, delimiter))) {
         tokens.push_back("");
     }
 
@@ -88,12 +84,12 @@ bool io_read_scenario_requests(string requestssFile, vector<_Request *> & reques
 	int id;
 	int src_id;
 	int server_id = 0;
-    double startsAt;
-    double stopsAt;
-    int videoId;
-    int screenWidth;
-    int screenHeight;
-    
+  double startsAt;
+  double stopsAt;
+  int videoId;
+  int screenWidth;
+  int screenHeight;
+
 	// Read from Requests
 	// id, source, startsAt, stopsAt, videoId, screenWidth, screenHeight
 #ifdef DEBUG_VERBOSE_
@@ -150,7 +146,7 @@ bool io_read_scenario_requests(string requestssFile, vector<_Request *> & reques
 		}
 	}
 	requests_file.close();
-    
+
 	return true;
 }
 
@@ -158,8 +154,8 @@ bool io_read_scenario_requests(string requestssFile, vector<_Request *> & reques
 bool io_read_topology(string linksFile, string nodesFile, vector<_Link *> & links, vector<_Node *> & nodes)
 {
 	int linecount;
-	std::string::size_type  idxStr2Double; 
-	
+	// std::string::size_type  idxStr2Double;
+
 	// link data
     int src_id;
     int dst_id;
@@ -167,7 +163,7 @@ bool io_read_topology(string linksFile, string nodesFile, vector<_Link *> & link
     double delay;
     double ploss;
     double buffersize_pkts;
-    
+
 	// Read from adj_matrix: source, destination, rate_bps, delay_ms, pakt_loss, buffersize_pkts
 #ifdef DEBUG_VERBOSE_
 	cout << "*************************************************" << endl;
@@ -180,16 +176,16 @@ bool io_read_topology(string linksFile, string nodesFile, vector<_Link *> & link
 	while (links_file) {
 		string line;
 		linecount++;
-		
+
 		if (!getline( links_file, line )) {
 			break;
 		}
 		if(line == "\n") {
 			break;
 		}
-		
+
 		cout << line << endl;
-		
+
 		if (linecount > 1) {
 			// Get each element of this line (each property of the link)
 			istringstream linestream( line );
@@ -199,7 +195,7 @@ bool io_read_topology(string linksFile, string nodesFile, vector<_Link *> & link
 				if (!getline( linestream, s, ' ' )) {
 					break;
 				}
-				
+
 				switch (columncount) {
 					case 1:
 						src_id = std::atoi(s.c_str());
@@ -236,23 +232,23 @@ bool io_read_topology(string linksFile, string nodesFile, vector<_Link *> & link
     string AllowDownscale;
     string AllowUpscale;
     string MaxBufferedSeconds;
-    
+
 	// id, type, AdaptationLogic, StartUpDelay, AllowDownscale, AllowUpscale, MaxBufferedSeconds
 	cout << "*************************************************" << endl;
 	cout << "Start reading nodes from file... " << endl;
 	cout << "*************************************************" << endl;
-	
+
 	ifstream nodes_file(nodesFile.c_str());
 	linecount = 0;
 	while (nodes_file) {
 		string line;
-		linecount++;	
+		linecount++;
 		if (!getline( nodes_file, line )) {
 			break;
 		}
-		
-		cout << line << endl; 
-		
+
+		cout << line << endl;
+
 		if (linecount > 1) {
 			// Get each element of the demand
 			istringstream linestream( line );
@@ -269,43 +265,43 @@ bool io_read_topology(string linksFile, string nodesFile, vector<_Link *> & link
 				case 2:
 					type = s;
 				case 3:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						AdaptationLogic = s;
-					else 
+					else
 						AdaptationLogic=string("");
 					break;
 				case 4:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						StartUpDelay = s;
-					else 
+					else
 						StartUpDelay=string("");
 					break;
 				case 5:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						AllowDownscale = s;
-					else 
+					else
 						AllowDownscale=string("no");
 					break;
 				case 6:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						AllowUpscale = s;
-					else 
+					else
 						AllowUpscale=string("no");
 					break;
 				case 7:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						MaxBufferedSeconds = s;
-					else 
+					else
 						MaxBufferedSeconds=string("");
 					break;
 				}
 				columncount++;
 			}
-			nodes.push_back(new _Node(id, type, AdaptationLogic, StartUpDelay, AllowDownscale, AllowUpscale, MaxBufferedSeconds));	
+			nodes.push_back(new _Node(id, type, AdaptationLogic, StartUpDelay, AllowDownscale, AllowUpscale, MaxBufferedSeconds));
 		}
 	}
 	nodes_file.close();
-	
+
 	return true;
 }
 
@@ -313,7 +309,7 @@ bool io_read_topology(string linksFile, string nodesFile, vector<_Link *> & link
 bool io_read_scenario(string linksFile, string nodesFile, string requestssFile, string routesFile, vector<_Link *> & links, vector<_Node *> & nodes, vector<_Request *> & requests, vector<_Route *> &routes)
 {
 	int linecount;
-	std::string::size_type  idxStr2Double; 
+	// std::string::size_type  idxStr2Double;
 
 	// link data
     int src_id;
@@ -368,7 +364,7 @@ bool io_read_scenario(string linksFile, string nodesFile, string requestssFile, 
 				if (!getline( linestream, s, ' ' )) {
 					break;
 				}
-				
+
 				switch (columncount) {
 					case 1:
 						src_id = std::atoi(s.c_str());
@@ -427,43 +423,43 @@ bool io_read_scenario(string linksFile, string nodesFile, string requestssFile, 
 				case 2:
 					type = s;
 				case 3:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						AdaptationLogic = s;
-					else 
+					else
 						AdaptationLogic=string("");
 					break;
 				case 4:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						StartUpDelay = s;
-					else 
+					else
 						StartUpDelay=string("");
 					break;
 				case 5:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						AllowDownscale = s;
-					else 
+					else
 						AllowDownscale=string("no");
 					break;
 				case 6:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						AllowUpscale = s;
-					else 
+					else
 						AllowUpscale=string("no");
 					break;
 				case 7:
-					if (type.compare("client")==0) 
+					if (type.compare("client")==0)
 						MaxBufferedSeconds = s;
-					else 
+					else
 						MaxBufferedSeconds=string("");
 					break;
 				}
 				columncount++;
 			}
-			nodes.push_back(new _Node(id, type, AdaptationLogic, StartUpDelay, AllowDownscale, AllowUpscale, MaxBufferedSeconds));	
+			nodes.push_back(new _Node(id, type, AdaptationLogic, StartUpDelay, AllowDownscale, AllowUpscale, MaxBufferedSeconds));
 		}
 	}
 	nodes_file.close();
-	
+
 
 	// Read from Requests
 	// id, source, startsAt, stopsAt, videoId, screenWidth, screenHeight
@@ -576,14 +572,14 @@ bool io_read_scenario(string linksFile, string nodesFile, string requestssFile, 
 bool io_read_scenario_routes(string routesFile, vector<_Route *> &routes)
 {
 	int linecount;
-	std::string::size_type  idxStr2Double; 
+	// std::string::size_type  idxStr2Double;
 
 	// route data
     int src_id;
     int dst_id;
 	double _bw_alloc;
 	vector<int> _hops;
-    
+
     // Read from Routes
     // src dst hops
 #ifdef DEBUG_VERBOSE_

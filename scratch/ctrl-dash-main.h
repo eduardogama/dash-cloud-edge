@@ -6,8 +6,8 @@
 #include "ns3/ptr.h"
 #include "ns3/address.h"
 
-#include "utils.h"
 #include "videos.h"
+#include "utils.h"
 
 #include "group-user.h"
 
@@ -495,7 +495,7 @@ void DashController::ILPSolution(unsigned actualNode, unsigned nextNode)
 					 << this->groups[i]->getUsers().size() << " ";
 	}
 
-	std:string cmd("python3.7 ../ILP-QoE/cflp-main.py " + buffer.str());
+	string cmd("python3.7 ../ILP-QoE/cflp-main.py " + buffer.str());
 	system(cmd.c_str());
 
 	string line;
@@ -533,7 +533,7 @@ void DashController::RTMgmtMechanism(unsigned actualNode, unsigned nextNode)
 {
 	for (unsigned i = 0; i < this->groups.size(); i++) {
 		Path path   = this->groups[i]->getRoute();
-		int content = this->groups[i]->getContent();
+		// int content = this->groups[i]->getContent();
 
 		unsigned actual = actualNode;
 		unsigned next   = nextNode;

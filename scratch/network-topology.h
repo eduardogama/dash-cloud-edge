@@ -20,8 +20,8 @@ class NetworkTopology
 		NetworkTopology();
 		virtual ~NetworkTopology();
 
-		void addLink(int src_id, int dst_id, double rate, double delay, double ploss, int buffersize_pkts);
-		void addNode(int id, string type);
+		void AddLink(int src_id, int dst_id, double rate, double delay, double ploss, int buffersize_pkts);
+		void AddNode(int id, string type);
 
 		vector<_Link *> getLinks(void);
 		vector<_Node *> getNodes(void);
@@ -37,7 +37,7 @@ class NetworkTopology
 		unsigned CapacityLink(unsigned actualPos, unsigned nextPos);
 		void ResetCapacityLink(unsigned actualPos, unsigned nextPos);
 
-		void SetUpAdjList();
+		void SetUpAdjList(int size);
 		void printAdjList();
 
 		void setClientContainers(NodeContainer *clients);
@@ -74,12 +74,12 @@ NetworkTopology::~NetworkTopology()
 
 }
 
-void NetworkTopology::addLink(int src_id, int dst_id, double rate, double delay, double ploss, int buffersize_pkts)
+void NetworkTopology::AddLink(int src_id, int dst_id, double rate, double delay, double ploss, int buffersize_pkts)
 {
 	this->links.push_back(new _Link(src_id, dst_id, rate, delay, ploss, buffersize_pkts));
 }
 
-void NetworkTopology::addNode(int id, string type)
+void NetworkTopology::AddNode(int id, string type)
 {
 	this->nodes.push_back(new _Node(id, type));
 }
@@ -149,7 +149,7 @@ void NetworkTopology::ResetCapacityLink(unsigned actualPos, unsigned nextPos)
 	matrixAllocation[actualPos*size + nextPos] = 0;
 }
 
-void NetworkTopology::SetUpAdjList()
+void NetworkTopology::SetUpAdjList(int size)
 {
 	// resize the vector to N elements of type vector<int>
 	adjList.resize(nodes.size());

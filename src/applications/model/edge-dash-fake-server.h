@@ -39,101 +39,115 @@
 
 #define CRLF "\r\n"
 
+
+using namespace std;
+
+
 namespace ns3 {
 
 class Address;
 class RandomVariableStream;
 class Socket;
 
-
 class EdgeDashFakeServerApplication : public Application
 {
 public:
-  /**
-   * \brief Get the type ID.
-   * \return the object TypeId
-   */
-  static TypeId GetTypeId (void);
-  EdgeDashFakeServerApplication ();
-  virtual ~EdgeDashFakeServerApplication ();
+    /**
+    * \brief Get the type ID.
+    * \return the object TypeId
+    */
+    static TypeId GetTypeId (void);
+    EdgeDashFakeServerApplication ();
+    virtual ~EdgeDashFakeServerApplication ();
 
-  void TxTrace(Ptr<Packet const> packet);
-  void RxTrace(Ptr<Packet const> packet);
+    void TxTrace(Ptr<Packet const> packet);
+    void RxTrace(Ptr<Packet const> packet);
 
-  void AddVideo(std::string video);
+    void AddVideo(std::string video);
+
+    string getVideoPath(int idVideo);
+    string OutputVideos(int start, int n);
+    bool hasVideo(int content);
+    bool VideoAssignment(int content);
+    void BindVideos(int start, unsigned contentN);
+    void AddCapacityNode(int capacity);
 
 protected:
-  virtual void DoDispose (void);
+    virtual void DoDispose (void);
 
-  bool m_active;
+    bool m_active;
 
-  uint64_t m_bytes_recv;
-  uint64_t m_bytes_sent;
-
-
-  uint64_t m_last_bytes_recv;
-  uint64_t m_last_bytes_sent;
+    uint64_t m_bytes_recv;
+    uint64_t m_bytes_sent;
 
 
-  std::string ImportDASHRepresentations (std::string mpdMetaDataFilename, int video_id);
+    uint64_t m_last_bytes_recv;
+    uint64_t m_last_bytes_sent;
 
 
-  bool ConnectionRequested (Ptr<Socket> socket, const Address& address);
-  void ConnectionAccepted (Ptr<Socket> socket, const Address& address);
+    std::string ImportDASHRepresentations (std::string mpdMetaDataFilename, int video_id);
 
 
-  TracedCallback<Ptr<ns3::Application> /*App*/,
+    bool ConnectionRequested (Ptr<Socket> socket, const Address& address);
+    void ConnectionAccepted (Ptr<Socket> socket, const Address& address);
+
+
+    TracedCallback<Ptr<ns3::Application> /*App*/,
     uint64_t /* TxBytes*/,uint64_t /* RxBytes */, uint32_t /* ConnectionCount */> m_throughputTrace;
 
-  /**
-   * \brief Register this new socket and gets a new client ID for this socket, and register this socket
-  */
-  uint64_t RegisterSocket(Ptr<Socket> socket);
+    /**
+    * \brief Register this new socket and gets a new client ID for this socket, and register this socket
+    */
+    uint64_t RegisterSocket(Ptr<Socket> socket);
 private:
-  std::map<Ptr<Socket> /* socket */, uint64_t /* socket id */  > m_activeSockets;
+    std::map<Ptr<Socket> /* socket */, uint64_t /* socket id */  > m_activeSockets;
 
-  std::map<uint64_t /* socket id */, HttpServerFakeClientSocket* /* client_socket */ > m_activeClients;
-
-
-  std::map<uint64_t /* socket id */, std::string /* packet buffer */ > m_activePackets;
-
-  std::map<std::string, long> m_fileSizes;
-  std::vector<std::string> m_virtualFiles;
-
-  std::map<std::string, std::string> m_mpdFileContents;
-
-  uint64_t m_lastSocketID;
-
-  virtual void StartApplication (void);
-  virtual void StopApplication (void);
-
-  /**
-   * \brief Handle a packet reception.
-   *
-   * This function is called by lower layers.
-   *
-   * \param socket the socket the packet was received to.
-   */
+    std::map<uint64_t /* socket id */, HttpServerFakeClientSocket* /* client_socket */ > m_activeClients;
 
 
-  void OnReadySend (Ptr<Socket> socket, unsigned int txSize);
+    std::map<uint64_t /* socket id */, std::string /* packet buffer */ > m_activePackets;
+
+    std::map<std::string, long> m_fileSizes;
+    std::vector<std::string> m_virtualFiles;
+
+    std::map<std::string, std::string> m_mpdFileContents;
+
+    uint64_t m_lastSocketID;
+
+    virtual void StartApplication (void);
+    virtual void StopApplication (void);
+
+    /**
+    * \brief Handle a packet reception.
+    *
+    * This function is called by lower layers.
+    *
+    * \param socket the socket the packet was received to.
+    */
 
 
-  void FinishedCallback (uint64_t socket_id);
-  void DoFinishSocket(uint64_t socket_id);
+    void OnReadySend (Ptr<Socket> socket, unsigned int txSize);
 
 
-  uint16_t m_port; //!< Port on which we listen for incoming packets.
-  Ptr<Socket> m_socket; //!< IPv4 Socket
+    void FinishedCallback (uint64_t socket_id);
+    void DoFinishSocket(uint64_t socket_id);
 
-  std::string m_mpdDirectory;
-  std::string m_mpdMetaDataFiles;
-  std::string m_metaDataContentDirectory;
-  std::string m_hostName;
-  Address m_listeningAddress;
 
-  EventId m_reportStatsTimer;
-  void ReportStats();
+    uint16_t m_port; //!< Port on which we listen for incoming packets.
+    Ptr<Socket> m_socket; //!< IPv4 Socket
+
+    std::string m_mpdDirectory;
+    std::string m_mpdMetaDataFiles;
+    std::string m_metaDataContentDirectory;
+    std::string m_hostName;
+    Address m_listeningAddress;
+
+    EventId m_reportStatsTimer;
+    void ReportStats();
+
+    vector<int> contentVideos;
+    int m_capacity;
+    int assignedVideos;
 };
 
 } // namespace ns3
