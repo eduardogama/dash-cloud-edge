@@ -47,7 +47,7 @@ int main (int argc, char *argv[])
     string DashTraceFile = "report.csv";
     string ServerThroughputTraceFile = "server_throughput.csv";
     string RepresentationType = "netflix";
-    string AdaptationLogicToUse = "RateAndBufferBasedAdaptationLogic";
+    string hasAlgorithm = "hybrid";
 
     int stopTime = 30;
     int seed = 0;
@@ -57,14 +57,15 @@ int main (int argc, char *argv[])
     cmd.AddValue("DashTraceFile", "Filename of the DASH traces", DashTraceFile);
     cmd.AddValue("RepresentationType", "Input representation type name", RepresentationType);
     cmd.AddValue("stopTime", "The time when the clients will stop requesting segments", stopTime);
-    cmd.AddValue("AdaptationLogicToUse", "Adaptation Logic to Use.", AdaptationLogicToUse);
+    cmd.AddValue("HASLogic", "Adaptation Logic to Use.", hasAlgorithm);
     cmd.AddValue("seed", "Seed experiment.", seed);
     cmd.AddValue("Client", "Number of clients per AP.", n_clients);
 
 
     cmd.Parse (argc, argv);
 
-    string dir = CreateDir("../DashBTreeBBotUp-" + to_string(seed));
+    string AdaptationLogicToUse = has_algorithm(hasAlgorithm);
+    string dir = CreateDir("../btree-" + hasAlgorithm + "-" + to_string(n_clients) + "-" + to_string(seed));
     string filePath = dir + "/Troughput_" + to_string(seed) + "_";
 
     AdaptationLogicToUse = "dash::player::" + AdaptationLogicToUse;
@@ -115,10 +116,8 @@ int main (int argc, char *argv[])
     fprintf(stderr, "Installing Internet Stack\n");
     // Now add ip/tcp stack to all nodes.
     internet.Install(nodes);
-    // internet.Install(cache_nodes);
 
     // create p2p links
-    vector<NetDeviceContainer> netDevices;
     Ipv4AddressHelper address;
     address.SetBase ("10.0.0.0", "255.255.255.0");
     PointToPointHelper p2p;
@@ -137,7 +136,6 @@ int main (int argc, char *argv[])
 
         address.Assign(deviceContainer);
         address.NewNetwork();
-        netDevices.push_back(deviceContainer);
 
         Ptr<Ipv4> srcipv4 = nodes.Get(srcnode)->GetObject<Ipv4>();
         Ptr<Ipv4> dstipv4 = nodes.Get(dstnode)->GetObject<Ipv4>();
@@ -179,9 +177,9 @@ int main (int argc, char *argv[])
                                 "DeltaY", DoubleValue (100.0),
                                 "GridWidth", UintegerValue (400),
                                 "LayoutType", StringValue ("RowFirst"));
-    mobility.SetMobilityModel ("ns3::ConstantPositionMobilityModel");
+    mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
 
-    Ptr<ListPositionAllocator> positionAlloc = CreateObject <ListPositionAllocator>();
+    Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator>();
 
     map<int, NodeContainer> map_aps;
     map<int, pair< int, Ptr<Node> >> m_clients;
@@ -189,7 +187,7 @@ int main (int argc, char *argv[])
     for (size_t i = 0; i < network.getNodes().size(); i++) {
         Ptr<Node> node = nodes.Get(network.getNodes().at(i)->getId());
         if (Names::FindName(node).find("ap") != string::npos) {
-            map_aps.insert ( std::pair<int, NodeContainer>(network.getNodes().at(i)->getId(), NodeContainer()) );
+            map_aps.insert(std::pair<int, NodeContainer>(network.getNodes().at(i)->getId(), NodeContainer()) );
         }
     }
 
@@ -245,7 +243,6 @@ int main (int argc, char *argv[])
     positionAlloc->Add(Vector(150, 30, 0)); // router 2
     positionAlloc->Add(Vector(150, 45, 0)); // router 3
 
-
     mobility.SetPositionAllocator(positionAlloc);
     mobility.SetMobilityModel("ns3::ConstantPositionMobilityModel");
 
@@ -296,31 +293,29 @@ int main (int argc, char *argv[])
 
     // %%%%%%%%%%%% Set up the DASH server
     int contentN = 10;
-    string representationStrings = OutputVideos(1,contentN);
-    BindVideosToNode(dst_server,1,contentN);
+    string representationStrings = OutputVideos(1, contentN);
 
     fprintf(stderr, "representations = %s\n", representationStrings.c_str ());
-    // getchar();
 
     Ptr<Node> cloudServer = nodes.Get(dst_server);
     string strIpv4Server = Ipv4AddressToString(cloudServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
-    DASHServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Server,
+    DASHServerHelper serverCache(Ipv4Address::GetAny (), 80, strIpv4Server,
         "/content/mpds/", representationStrings, "/content/segments/");
 
-    ApplicationContainer serverApps = edgeServerCache.Install(cloudServer);
+    ApplicationContainer serverApps = serverCache.Install(cloudServer);
     serverApps.Start (Seconds(0.0));
     serverApps.Stop (Seconds(stopTime));
 
     for (size_t i = 3; i < nodes.GetN(); i++) {
         representationStrings = GetCurrentWorkingDir() + "/../content/representations/netflix_vid1.csv";
-        AddCapacityNode(i, 3);
 
         Ptr<Node> edgeServer = nodes.Get(i);
         string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
         EdgeDashServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
-                                "/content/mpds/", representationStrings, "/content/segments/");
+            "/content/mpds/", representationStrings, "/content/segments/");
+        edgeServerCache.SetAttribute("Capacity", UintegerValue(3));
 
         ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
         serverApps.Start (Seconds(0.0));
@@ -329,7 +324,6 @@ int main (int argc, char *argv[])
 
     for (size_t i = 1; i < 3; i++) {
         representationStrings = GetCurrentWorkingDir() + "/../content/representations/netflix_vid1.csv";
-        AddCapacityNode(i, 6);
 
         Ptr<Node> edgeServer = nodes.Get(i);
         string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
@@ -337,6 +331,7 @@ int main (int argc, char *argv[])
         EdgeDashServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
                                 "/content/mpds/", representationStrings, "/content/segments/");
 
+        edgeServerCache.SetAttribute("Capacity", UintegerValue(6));
         ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
         serverApps.Start (Seconds(0.0));
         serverApps.Stop (Seconds(stopTime));
@@ -344,13 +339,13 @@ int main (int argc, char *argv[])
 
     for (size_t i = 0; i < 1; i++) {
         representationStrings = GetCurrentWorkingDir() + "/../content/representations/netflix_vid1.csv";
-        AddCapacityNode(i, 9);
 
         Ptr<Node> edgeServer = nodes.Get(i);
         string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
         EdgeDashServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
                                 "/content/mpds/", representationStrings, "/content/segments/");
+        edgeServerCache.SetAttribute("Capacity", UintegerValue(9));
 
         ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
         serverApps.Start (Seconds(0.0));
@@ -443,10 +438,9 @@ int main (int argc, char *argv[])
                   MakeCallback (&Monitoring::RateCallback, monitor));
     Config::Connect("/NodeList/7/DeviceList/*/$ns3::PointToPointNetDevice/MacTx",
                   MakeCallback (&Monitoring::RateCallback, monitor));
-
     Simulator::Schedule(Seconds(0), &Monitoring::BandwidthEstimator, monitor);
 
-    // %%%%%%%%%%%% sort out the simulation
+
     AnimationInterface anim(dir + string("/topology.netanim"));
 
     DASHPlayerTracer::InstallAll(dir + string("/topology.csv"));

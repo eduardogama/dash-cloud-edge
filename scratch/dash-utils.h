@@ -75,6 +75,16 @@ std::vector<std::string> split(const std::string& s, const std::string& delimite
     return tokens;
 }
 
+string has_algorithm(string const algo)
+{
+   if (algo == "hybrid") {
+       return "RateAndBufferBasedAdaptationLogic";
+   } else if (algo == "rate") {
+       return "RateBasedAdaptationLogic";
+   } else {
+       return "BufferBasedAdaptationLogic";
+   }
+}
 
 bool io_read_scenario_requests(string requestssFile, vector<_Request *> & requests)
 {
