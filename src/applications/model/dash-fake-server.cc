@@ -87,9 +87,17 @@ DASHFakeServerApplication::GetTypeId (void)
                    StringValue("localhost"),
                    MakeStringAccessor(&DASHFakeServerApplication::m_hostName),
                    MakeStringChecker())
+    .AddAttribute ("Capacity", "Capacity Server.",
+                   UintegerValue (10),
+                   MakeUintegerAccessor (&DASHFakeServerApplication::m_capacity),
+                   MakeUintegerChecker<uint16_t> ())
+    .AddAttribute ("StartCapacity", "Start Capacity Server.",
+                   UintegerValue (0),
+                   MakeUintegerAccessor (&DASHFakeServerApplication::assignedVideos),
+                   MakeUintegerChecker<uint16_t> ())
     .AddTraceSource("ThroughputTracer", "Trace Throughput statistics of this server",
-                      MakeTraceSourceAccessor(&DASHFakeServerApplication::m_throughputTrace), "bla")
-                    ;
+                   MakeTraceSourceAccessor(&DASHFakeServerApplication::m_throughputTrace), "bla")
+                   ;
   ;
   return tid;
 }
@@ -372,6 +380,8 @@ void DASHFakeServerApplication::StartApplication (void)
     m_mpdFileContents[SSMpdFilename.str()] = compressedMpdData;
   }
 
+  BindVideos(1, 10);
+
   ReportStats();
 }
 
@@ -444,6 +454,60 @@ uint64_t DASHFakeServerApplication::RegisterSocket (Ptr<Socket> socket)
 {
   this->m_activeSockets[socket] = this->m_lastSocketID;
   return this->m_lastSocketID++;
+}
+
+
+string DASHFakeServerApplication::getVideoPath(int idVideo)
+{
+    return "content/representations/vid" + to_string(idVideo) + ".csv";
+}
+
+string DASHFakeServerApplication::OutputVideos(int start, int n)
+{
+    string representationStrings = "";
+    for (int i = start; i <= n; i++) {
+        representationStrings += "content/representations/vid" + to_string(i) + ".csv";
+        if (i < n) {
+            representationStrings += ",";
+        }
+    }
+
+    return representationStrings;
+}
+
+bool DASHFakeServerApplication::hasVideo(int content)
+{
+    for (auto& videoId : contentVideos) {
+        if (videoId == content) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DASHFakeServerApplication::VideoAssignment(int content)
+{
+    if (assignedVideos < m_capacity) {
+        assignedVideos++;
+        BindVideos(content, content);
+
+        return true;
+    }
+
+    return false;
+}
+
+void DASHFakeServerApplication::AddCapacityNode(int capacity)
+{
+    m_capacity = capacity;
+    assignedVideos = 0;
+}
+
+void DASHFakeServerApplication::BindVideos(int start, unsigned contentN)
+{
+    for (size_t i = start; i <= contentN; i++) {
+        contentVideos.push_back(i);
+    }
 }
 
 }

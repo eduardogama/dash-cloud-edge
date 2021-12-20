@@ -59,7 +59,6 @@ bool ControllerMain::OptimizerComponent(int actualNode, int nextNode)
 bool ControllerMain::ILPSolution(int actualNode, int nextNode)
 {
     ostringstream buffer;
-
     vector<GroupUser *> groups = bigtable->getGroups();
 
     buffer << "python3.7 ../ILP-QoE/cflp-2-main.py ";
@@ -67,13 +66,13 @@ bool ControllerMain::ILPSolution(int actualNode, int nextNode)
 	buffer << actualNode << " " << nextNode << " ";
     for (unsigned i = 0; i < groups.size(); i++) {
 		buffer << groups[i]->getAp() << " "
-					 << i + 8 << " "
-					 << i << " "
-					 << groups[i]->getUsers().size() << " ";
-	}
+            << i + 8 << " "
+            << i << " "
+            << groups[i]->getUsers().size() << " ";
+    }
 
     string output = GenRandom(6);
-    buffer <<  " > " << output;
+    buffer <<  "> " << output;
 
     string cmd(buffer.str());
 	system(cmd.c_str());
@@ -103,16 +102,20 @@ bool ControllerMain::ILPSolution(int actualNode, int nextNode)
             DoRedirectUsers(groupId, serverId, content);
         }
     }
+    ilpSolution.close();
+
+	cmd = "rm " + output;
+	system(cmd.c_str());
 
     return true;
 }
-
+//5 0 1	3 8 0 5	4 9 1 1	5 10 2 1 3 11 3 2	6 12 4 3
 void ControllerMain::DoRedirectUsers(unsigned i, unsigned nextNode, int content)
 {
     vector<GroupUser *> groups = bigtable->getGroups();
 
-    std::cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << '\n';
-    std::cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << '\n';
+    cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << '\n';
+    cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << '\n';
     string newServerIp = getInterfaceNode(nextNode);
 
     groups[i]->setActualNode(nextNode);
@@ -187,13 +190,13 @@ void ControllerMain::StartApplication()
         }
     }
 
-    m_socket->Listen ();
+    m_socket->Listen();
 
-    NS_ASSERT (m_socket != 0);
+    NS_ASSERT(m_socket != 0);
 
     // And make sure to handle requests and accepted connections
     m_socket->SetAcceptCallback(MakeCallback(&ControllerMain::ConnectionRequested, this),
-                                MakeCallback(&ControllerMain::ConnectionAccepted, this));
+        MakeCallback(&ControllerMain::ConnectionAccepted, this));
 }
 
 void ControllerMain::StopApplication()
@@ -209,7 +212,6 @@ bool ControllerMain::ConnectionRequested (Ptr<Socket> socket, const Address& add
 
 void ControllerMain::ConnectionAccepted (Ptr<Socket> socket, const Address& address)
 {
-
     InetSocketAddress iaddr = InetSocketAddress::ConvertFrom (address);
 
     cout << "ControllerMain(" << socket << ") " << Simulator::Now ()
@@ -221,8 +223,7 @@ void ControllerMain::ConnectionAccepted (Ptr<Socket> socket, const Address& addr
     socket->SetRecvCallback (MakeCallback (&ControllerMain::HandleIncomingData, this));
 
     socket->SetCloseCallbacks(MakeCallback (&ControllerMain::ConnectionClosedNormal, this),
-                            MakeCallback (&ControllerMain::ConnectionClosedError,  this));
-
+        MakeCallback (&ControllerMain::ConnectionClosedError,  this));
 }
 
 void ControllerMain::HandleIncomingData(Ptr<Socket> socket)
@@ -237,7 +238,8 @@ string ControllerMain::Ipv4AddressToString (Ipv4Address ad)
     return oss.str();
 }
 
-string ControllerMain::GenRandom(const int len) {
+string ControllerMain::GenRandom(const int len)
+{
     static const char alphanum[] =
         "0123456789"
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"

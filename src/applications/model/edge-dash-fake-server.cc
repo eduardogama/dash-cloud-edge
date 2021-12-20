@@ -101,7 +101,6 @@ EdgeDashFakeServerApplication::GetTypeId (void)
   return tid;
 }
 
-
 EdgeDashFakeServerApplication::EdgeDashFakeServerApplication ()
 {
   NS_LOG_FUNCTION (this);
@@ -331,28 +330,28 @@ void EdgeDashFakeServerApplication::StopApplication ()
 
 void EdgeDashFakeServerApplication::AddVideo(std::string video)
 {
-  int pos1 = video.find("vid") + 3;
-  int pos2 = video.find(".csv");
-  int video_id = std::stoi(video.substr(pos1, pos2 - pos1));
+    int pos1 = video.find("vid") + 3;
+    int pos2 = video.find(".csv");
+    int video_id = std::stoi(video.substr(pos1, pos2 - pos1));
 
-  std::string mmm = video;
-  std::string mpdData = ImportDASHRepresentations(mmm, video_id);
+    std::string mmm = video;
+    std::string mpdData = ImportDASHRepresentations(mmm, video_id);
 
-  // compress
-  std::string compressedMpdData = zlib_compress_string(mpdData);
-  fprintf(stderr, "Size of compressed = %ld, uncompressed = %ld\n", compressedMpdData.length(), mpdData.length());
+    // compress
+    std::string compressedMpdData = zlib_compress_string(mpdData);
+    fprintf(stderr, "Size of compressed = %ld, uncompressed = %ld\n", compressedMpdData.length(), mpdData.length());
 
-  std::stringstream SSMpdFilename;
+    std::stringstream SSMpdFilename;
 
-  SSMpdFilename << m_mpdDirectory << "vid" << video_id << ".mpd.gz";
+    SSMpdFilename << m_mpdDirectory << "vid" << video_id << ".mpd.gz";
 
-  m_fileSizes[SSMpdFilename.str()] = compressedMpdData.size();
+    m_fileSizes[SSMpdFilename.str()] = compressedMpdData.size();
 
-  fprintf(stderr, "Adding '%s' to m_fileSizes with size %ld\n", SSMpdFilename.str().c_str(), compressedMpdData.size());
+    fprintf(stderr, "Adding '%s' to m_fileSizes with size %ld\n", SSMpdFilename.str().c_str(), compressedMpdData.size());
 
-  m_mpdFileContents[SSMpdFilename.str()] = compressedMpdData;
+    m_mpdFileContents[SSMpdFilename.str()] = compressedMpdData;
 
-  ReportStats();
+    ReportStats();
 }
 
 void EdgeDashFakeServerApplication::OnReadySend(Ptr<Socket> socket, unsigned int txSize)

@@ -49,16 +49,6 @@ string BigTable::getServerTable(string server, int content)
 	return (*serverTable)[{server, content}];
 }
 
-// void BigTable::setNetwork(NetworkGraph* network)
-// {
-//     this->network = network;
-// }
-//
-// NetworkGraph* BigTable::getNetwork()
-// {
-//     return this->network;
-// }
-
 void BigTable::setClientContainers(NodeContainer* clients)
 {
     this->clientContainers = clients;
