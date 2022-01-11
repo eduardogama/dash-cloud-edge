@@ -18,7 +18,7 @@ NS_OBJECT_ENSURE_REGISTERED(ControllerMain);
 
 TypeId ControllerMain::GetTypeId()
 {
-  static TypeId tid = TypeId("ns3::ControllerMain")
+    static TypeId tid = TypeId("ns3::ControllerMain")
     .SetParent<Application> ()
     .SetGroupName("Applications")
     .AddConstructor<ControllerMain> ()
@@ -31,29 +31,43 @@ TypeId ControllerMain::GetTypeId()
                    UintegerValue (1317),
                    MakeUintegerAccessor (&ControllerMain::m_port),
                    MakeUintegerChecker<uint16_t> ())
-  ;
-  return tid;
+    ;
+    return tid;
 }
 
 ControllerMain::ControllerMain()
 {
-  NS_LOG_FUNCTION (this);
+    NS_LOG_FUNCTION (this);
 }
 
 ControllerMain::~ControllerMain()
 {
-  NS_LOG_FUNCTION (this);
+    NS_LOG_FUNCTION (this);
 }
 
-void ControllerMain::Setup(Address address, uint16_t port)
+void ControllerMain::Setup(Address address, uint16_t port, string optAlgo)
 {
     this->m_listeningAddress = address;
     this->m_port = port;
+
+    if (optAlgo == "ILPSolution") {
+        optimizerSol = function<bool(int, int)>(
+            [&](int actualNode, int nextNode) {
+                return ControllerMain::ILPSolution(actualNode, nextNode);
+            }
+        );
+    } else if (optAlgo == "QoSGreedy") {
+        optimizerSol = function<bool(int, int)>(
+            [&](int actualNode, int nextNode) {
+                return ControllerMain::QoSGreedy(actualNode, nextNode);
+            }
+        );
+    }
 }
 
 bool ControllerMain::OptimizerComponent(int actualNode, int nextNode)
 {
-    return ILPSolution(actualNode, nextNode);
+    return optimizerSol(actualNode, nextNode);
 }
 
 bool ControllerMain::ILPSolution(int actualNode, int nextNode)
@@ -61,7 +75,7 @@ bool ControllerMain::ILPSolution(int actualNode, int nextNode)
     ostringstream buffer;
     vector<GroupUser *> groups = bigtable->getGroups();
 
-    buffer << "python3.7 ../ILP-QoE/cflp-2-main.py ";
+    buffer << "python3.7 ../ILP-QoE/opt-main.py ";
     buffer << groups.size() << " ";
 	buffer << actualNode << " " << nextNode << " ";
     for (unsigned i = 0; i < groups.size(); i++) {
@@ -81,7 +95,7 @@ bool ControllerMain::ILPSolution(int actualNode, int nextNode)
     ifstream ilpSolution(output);
 
     while (getline (ilpSolution, line)) {
-        std::cout << line << '\n';
+        cout << line << endl;
         vector<string> vals = Split(line, " ");
 
         int groupId = ::stoi(vals[0]);
@@ -109,13 +123,18 @@ bool ControllerMain::ILPSolution(int actualNode, int nextNode)
 
     return true;
 }
-//5 0 1	3 8 0 5	4 9 1 1	5 10 2 1 3 11 3 2	6 12 4 3
+
+bool ControllerMain::QoSGreedy(int actualNode, int nextNode)
+{
+    return true;
+}
+
 void ControllerMain::DoRedirectUsers(unsigned i, unsigned nextNode, int content)
 {
     vector<GroupUser *> groups = bigtable->getGroups();
 
-    cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << '\n';
-    cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << '\n';
+    cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << ")\n";
+    cout << "group(" << groups[i]->getId() << "," << groups[i]->getContent() << ")\n";
     string newServerIp = getInterfaceNode(nextNode);
 
     groups[i]->setActualNode(nextNode);
@@ -167,7 +186,7 @@ void ControllerMain::StartApplication()
         m_socket = Socket::CreateSocket(GetNode(), tid);
 
         // Fatal error if socket type is not NS3_SOCK_STREAM or NS3_SOCK_SEQPACKET
-        if (m_socket->GetSocketType () != Socket::NS3_SOCK_STREAM &&
+        if(m_socket->GetSocketType () != Socket::NS3_SOCK_STREAM &&
             m_socket->GetSocketType () != Socket::NS3_SOCK_SEQPACKET)
         {
             fprintf (stderr,"Using BulkSend with an incompatible socket type. "
@@ -177,12 +196,18 @@ void ControllerMain::StartApplication()
 
         if (Ipv4Address::IsMatchingType (m_listeningAddress) == true)
         {
-            InetSocketAddress local = InetSocketAddress (Ipv4Address::ConvertFrom (m_listeningAddress), m_port);
-            cout << "Listening on Ipv4 " << Ipv4Address::ConvertFrom (m_listeningAddress) << ":" << m_port << endl;
-            m_socket->Bind (local);
-        } else if (Ipv6Address::IsMatchingType (m_listeningAddress) == true)
+            InetSocketAddress local = InetSocketAddress(
+                Ipv4Address::ConvertFrom(m_listeningAddress),
+                m_port
+            );
+            cout << "Listening on Ipv4 " << Ipv4Address::ConvertFrom(m_listeningAddress) << ":" << m_port << endl;
+            m_socket->Bind(local);
+        } else if (Ipv6Address::IsMatchingType(m_listeningAddress) == true)
         {
-            Inet6SocketAddress local6 = Inet6SocketAddress (Ipv6Address::ConvertFrom (m_listeningAddress), m_port);
+            Inet6SocketAddress local6 = Inet6SocketAddress(
+                Ipv6Address::ConvertFrom(m_listeningAddress),
+                m_port
+            );
             cout << "Listening on Ipv6 " << Ipv6Address::ConvertFrom (m_listeningAddress) << endl;
             m_socket->Bind (local6);
         } else {
@@ -195,8 +220,10 @@ void ControllerMain::StartApplication()
     NS_ASSERT(m_socket != 0);
 
     // And make sure to handle requests and accepted connections
-    m_socket->SetAcceptCallback(MakeCallback(&ControllerMain::ConnectionRequested, this),
-        MakeCallback(&ControllerMain::ConnectionAccepted, this));
+    m_socket->SetAcceptCallback(
+        MakeCallback(&ControllerMain::ConnectionRequested, this),
+        MakeCallback(&ControllerMain::ConnectionAccepted, this)
+    );
 }
 
 void ControllerMain::StopApplication()
@@ -204,26 +231,28 @@ void ControllerMain::StopApplication()
     NS_LOG_FUNCTION (this);
 }
 
-bool ControllerMain::ConnectionRequested (Ptr<Socket> socket, const Address& address)
+bool ControllerMain::ConnectionRequested(Ptr<Socket> socket, const Address& address)
 {
     cout << Simulator::Now () << " Socket = " << socket << " Server: ConnectionRequested" << endl;
     return true;
 }
 
-void ControllerMain::ConnectionAccepted (Ptr<Socket> socket, const Address& address)
+void ControllerMain::ConnectionAccepted(Ptr<Socket> socket, const Address& address)
 {
-    InetSocketAddress iaddr = InetSocketAddress::ConvertFrom (address);
+    InetSocketAddress iaddr = InetSocketAddress::ConvertFrom(address);
 
-    cout << "ControllerMain(" << socket << ") " << Simulator::Now ()
-        << " Successful socket creation Connection Accepted From " << iaddr.GetIpv4 ()
+    cout << "ControllerMain(" << socket << ") " << Simulator::Now()
+        << " Successful socket creation Connection Accepted From " << iaddr.GetIpv4()
         << " port: " << iaddr.GetPort ()<< endl;
 
     m_clientSocket[Ipv4AddressToString(iaddr.GetIpv4())] = socket;
 
-    socket->SetRecvCallback (MakeCallback (&ControllerMain::HandleIncomingData, this));
+    socket->SetRecvCallback(MakeCallback(&ControllerMain::HandleIncomingData, this));
 
-    socket->SetCloseCallbacks(MakeCallback (&ControllerMain::ConnectionClosedNormal, this),
-        MakeCallback (&ControllerMain::ConnectionClosedError,  this));
+    socket->SetCloseCallbacks(
+        MakeCallback(&ControllerMain::ConnectionClosedNormal, this),
+        MakeCallback(&ControllerMain::ConnectionClosedError,  this)
+    );
 }
 
 void ControllerMain::HandleIncomingData(Ptr<Socket> socket)
@@ -236,22 +265,6 @@ string ControllerMain::Ipv4AddressToString (Ipv4Address ad)
     ostringstream oss;
     ad.Print(oss);
     return oss.str();
-}
-
-string ControllerMain::GenRandom(const int len)
-{
-    static const char alphanum[] =
-        "0123456789"
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz";
-    string tmp_s;
-    tmp_s.reserve(len);
-
-    for (int i = 0; i < len; ++i) {
-        tmp_s += alphanum[rand() % (sizeof(alphanum) - 1)];
-    }
-
-    return tmp_s;
 }
 
 void ControllerMain::ConnectionClosedNormal (Ptr<Socket> socket)

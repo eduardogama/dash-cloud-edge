@@ -236,96 +236,96 @@ std::string EdgeDashFakeServerApplication::ImportDASHRepresentations (std::strin
 
 void EdgeDashFakeServerApplication::ReportStats()
 {
-  uint64_t bytes_recv = m_bytes_recv - m_last_bytes_recv;
-  uint64_t bytes_sent = m_bytes_sent - m_last_bytes_sent;
+    uint64_t bytes_recv = m_bytes_recv - m_last_bytes_recv;
+    uint64_t bytes_sent = m_bytes_sent - m_last_bytes_sent;
 
-  m_throughputTrace(this, bytes_sent, bytes_recv, m_activeClients.size());
+    m_throughputTrace(this, bytes_sent, bytes_recv, m_activeClients.size());
 
-  m_last_bytes_recv = m_bytes_recv;
-  m_last_bytes_sent = m_bytes_sent;
+    m_last_bytes_recv = m_bytes_recv;
+    m_last_bytes_sent = m_bytes_sent;
 
-  if (m_active) {
-    m_reportStatsTimer = Simulator::Schedule(Seconds(1.0), &EdgeDashFakeServerApplication::ReportStats, this);
-  }
+    if (m_active) {
+        m_reportStatsTimer = Simulator::Schedule(Seconds(1.0), &EdgeDashFakeServerApplication::ReportStats, this);
+    }
 }
 
 // this traces the acutal packet size, including header etc...
 void EdgeDashFakeServerApplication::TxTrace(Ptr<Packet const> packet)
 {
-  m_bytes_sent += packet->GetSize();
+    m_bytes_sent += packet->GetSize();
 }
 
 // this traces the acutal packet size, including header etc...
-
 void EdgeDashFakeServerApplication::RxTrace(Ptr<Packet const> packet)
 {
-  m_bytes_recv += packet->GetSize();
+    m_bytes_recv += packet->GetSize();
 }
 
 void EdgeDashFakeServerApplication::StartApplication (void)
 {
-  NS_LOG_FUNCTION (this);
+    NS_LOG_FUNCTION (this);
 
-  m_lastSocketID = 1;
+    m_lastSocketID = 1;
 
-  m_active = true;
+    m_active = true;
 
-  Ptr<NetDevice> netdevice = GetNode()->GetDevice(0);
-  netdevice->TraceConnectWithoutContext("PhyTxEnd", MakeCallback(&EdgeDashFakeServerApplication::TxTrace, this));
-  netdevice->TraceConnectWithoutContext("PhyRxEnd", MakeCallback(&EdgeDashFakeServerApplication::RxTrace, this));
+    Ptr<NetDevice> netdevice = GetNode()->GetDevice(0);
+    netdevice->TraceConnectWithoutContext("PhyTxEnd", MakeCallback(&EdgeDashFakeServerApplication::TxTrace, this));
+    netdevice->TraceConnectWithoutContext("PhyRxEnd", MakeCallback(&EdgeDashFakeServerApplication::RxTrace, this));
 
-  m_last_bytes_recv = 0;
-  m_last_bytes_sent = 0;
+    m_last_bytes_recv = 0;
+    m_last_bytes_sent = 0;
 
-  m_bytes_recv = 0;
-  m_bytes_sent = 0;
+    m_bytes_recv = 0;
+    m_bytes_sent = 0;
 
-  if (m_socket == 0)
-  {
-    TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
-    m_socket = Socket::CreateSocket (GetNode (), tid);
-
-    // Fatal error if socket type is not NS3_SOCK_STREAM or NS3_SOCK_SEQPACKET
-    if (m_socket->GetSocketType () != Socket::NS3_SOCK_STREAM
-        && m_socket->GetSocketType () != Socket::NS3_SOCK_SEQPACKET)
+    if (m_socket == 0)
     {
-      NS_FATAL_ERROR ("Using BulkSend with an incompatible socket type. "
-                      "BulkSend requires SOCK_STREAM or SOCK_SEQPACKET. "
-                      "In other words, use TCP instead of UDP.");
+        TypeId tid = TypeId::LookupByName ("ns3::TcpSocketFactory");
+        m_socket = Socket::CreateSocket (GetNode (), tid);
+
+        // Fatal error if socket type is not NS3_SOCK_STREAM or NS3_SOCK_SEQPACKET
+        if(m_socket->GetSocketType () != Socket::NS3_SOCK_STREAM
+            && m_socket->GetSocketType () != Socket::NS3_SOCK_SEQPACKET)
+        {
+            NS_FATAL_ERROR ("Using BulkSend with an incompatible socket type. "
+                          "BulkSend requires SOCK_STREAM or SOCK_SEQPACKET. "
+                          "In other words, use TCP instead of UDP.");
+        }
+
+        if (Ipv4Address::IsMatchingType(m_listeningAddress) == true)
+        {
+            InetSocketAddress local = InetSocketAddress(Ipv4Address::ConvertFrom(m_listeningAddress), m_port);
+            NS_LOG_INFO("Listening on Ipv4 " << Ipv4Address::ConvertFrom(m_listeningAddress) << ":" << m_port);
+            m_socket->Bind(local);
+        } else if (Ipv6Address::IsMatchingType(m_listeningAddress) == true) {
+            Inet6SocketAddress local6 = Inet6SocketAddress (Ipv6Address::ConvertFrom(m_listeningAddress), m_port);
+            NS_LOG_INFO("Listening on Ipv6 " << Ipv6Address::ConvertFrom(m_listeningAddress));
+            m_socket->Bind (local6);
+        } else {
+            NS_LOG_ERROR("Not sure what type the m_listeningaddress is... " << m_listeningAddress);
+        }
     }
 
-    if (Ipv4Address::IsMatchingType(m_listeningAddress) == true)
-    {
-      InetSocketAddress local = InetSocketAddress (Ipv4Address::ConvertFrom(m_listeningAddress), m_port);
-      NS_LOG_INFO("Listening on Ipv4 " << Ipv4Address::ConvertFrom(m_listeningAddress) << ":" << m_port);
-      m_socket->Bind (local);
-    } else if (Ipv6Address::IsMatchingType(m_listeningAddress) == true) {
-      Inet6SocketAddress local6 = Inet6SocketAddress (Ipv6Address::ConvertFrom(m_listeningAddress), m_port);
-      NS_LOG_INFO("Listening on Ipv6 " << Ipv6Address::ConvertFrom(m_listeningAddress));
-      m_socket->Bind (local6);
-    } else {
-      NS_LOG_ERROR("Not sure what type the m_listeningaddress is... " << m_listeningAddress);
-    }
-  }
+    // Listen for incoming connections
+    m_socket->Listen();
+    NS_ASSERT(m_socket != 0);
 
-  // Listen for incoming connections
-  m_socket->Listen();
-  NS_ASSERT (m_socket != 0);
-
-  // And make sure to handle requests and accepted connections
-  m_socket->SetAcceptCallback (MakeCallback(&EdgeDashFakeServerApplication::ConnectionRequested, this),
-      MakeCallback(&EdgeDashFakeServerApplication::ConnectionAccepted, this)
-  );
+    // And make sure to handle requests and accepted connections
+    m_socket->SetAcceptCallback(
+        MakeCallback(&EdgeDashFakeServerApplication::ConnectionRequested, this),
+        MakeCallback(&EdgeDashFakeServerApplication::ConnectionAccepted, this)
+    );
 }
 
 void EdgeDashFakeServerApplication::StopApplication ()
 {
-  NS_LOG_FUNCTION (this);
+    NS_LOG_FUNCTION (this);
 
-  if (m_socket != 0) {
-    m_socket->Close ();
-    m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
-  }
+    if (m_socket != 0) {
+        m_socket->Close ();
+        m_socket->SetRecvCallback (MakeNullCallback<void, Ptr<Socket> > ());
+    }
 }
 
 void EdgeDashFakeServerApplication::AddVideo(std::string video)
@@ -356,57 +356,71 @@ void EdgeDashFakeServerApplication::AddVideo(std::string video)
 
 void EdgeDashFakeServerApplication::OnReadySend(Ptr<Socket> socket, unsigned int txSize)
 {
-  fprintf(stderr, "Server says it is ready to send something now...\n");
+    fprintf(stderr, "Server says it is ready to send something now...\n");
 }
 
 bool EdgeDashFakeServerApplication::ConnectionRequested (Ptr<Socket> socket, const Address& address)
 {
-  NS_LOG_FUNCTION (this << socket << address);
-  NS_LOG_DEBUG (Simulator::Now () << " Socket = " << socket << " " << " Server: ConnectionRequested");
-  return true;
+    NS_LOG_FUNCTION (this << socket << address);
+    NS_LOG_DEBUG (Simulator::Now () << " Socket = " << socket << " " << " Server: ConnectionRequested");
+    return true;
 }
 
 void EdgeDashFakeServerApplication::ConnectionAccepted (Ptr<Socket> socket, const Address& address)
 {
-  NS_LOG_FUNCTION (this << socket << address);
-  fprintf(stderr, "DASH Fake Server(%s): Connection Accepted!\n", m_hostName.c_str());
+    NS_LOG_FUNCTION (this << socket << address);
+    fprintf(stderr, "DASH Fake Server(%s): Connection Accepted!\n", m_hostName.c_str());
 
-  uint64_t socket_id = RegisterSocket(socket);
+    uint64_t socket_id = RegisterSocket(socket);
 
-  m_activeClients[socket_id] = new HttpServerFakeVirtualClientSocket(socket_id, "/", m_fileSizes, m_virtualFiles, m_mpdFileContents,
-                  MakeCallback(&EdgeDashFakeServerApplication::FinishedCallback, this));
+    m_activeClients[socket_id] = new HttpServerFakeVirtualClientSocket(
+        socket_id,
+        "/",
+        m_fileSizes,
+        m_virtualFiles,
+        m_mpdFileContents,
+        MakeCallback(&EdgeDashFakeServerApplication::FinishedCallback, this)
+    );
 
-  NS_LOG_DEBUG (socket << " " << Simulator::Now () << " Successful socket id : " << socket_id << " Connection Accepted From " << address);
+    NS_LOG_DEBUG (socket << " " << Simulator::Now () << " Successful socket id : " << socket_id << " Connection Accepted From " << address);
 
-  // set callbacks for this socket to be in HttpServerFakeClientSocket class
-  socket->SetSendCallback (MakeCallback (&HttpServerFakeVirtualClientSocket::HandleReadyToTransmit, m_activeClients[socket_id]));
-  socket->SetRecvCallback (MakeCallback (&HttpServerFakeVirtualClientSocket::HandleIncomingData, m_activeClients[socket_id]));
+    // set callbacks for this socket to be in HttpServerFakeClientSocket class
+    socket->SetSendCallback(
+        MakeCallback(&HttpServerFakeVirtualClientSocket::HandleReadyToTransmit, m_activeClients[socket_id])
+    );
 
+    socket->SetRecvCallback(
+        MakeCallback(&HttpServerFakeVirtualClientSocket::HandleIncomingData, m_activeClients[socket_id])
+    );
 
-  socket->TraceConnectWithoutContext ("State",
-    MakeCallback(&HttpServerFakeVirtualClientSocket::LogStateChange, m_activeClients[socket_id]));
+    socket->TraceConnectWithoutContext(
+        "State",
+        MakeCallback(&HttpServerFakeVirtualClientSocket::LogStateChange, m_activeClients[socket_id])
+    );
 
-    socket->SetCloseCallbacks (MakeCallback (&HttpServerFakeVirtualClientSocket::ConnectionClosedNormal, m_activeClients[socket_id]),
-                             MakeCallback (&HttpServerFakeVirtualClientSocket::ConnectionClosedError,  m_activeClients[socket_id]));
+    socket->SetCloseCallbacks(
+        MakeCallback(&HttpServerFakeVirtualClientSocket::ConnectionClosedNormal, m_activeClients[socket_id]),
+        MakeCallback (&HttpServerFakeVirtualClientSocket::ConnectionClosedError, m_activeClients[socket_id])
+    );
 }
 
 void EdgeDashFakeServerApplication::FinishedCallback (uint64_t socket_id)
 {
-  // create timer to finish this, because if we do it in here, we will crash the app
-  Simulator::Schedule(Seconds(1.0), &EdgeDashFakeServerApplication::DoFinishSocket, this, socket_id);
-  // EdgeDashFakeServerApplication::DoFinishSocket(socket_id);
+    // create timer to finish this, because if we do it in here, we will crash the app
+    Simulator::Schedule(Seconds(1.0), &EdgeDashFakeServerApplication::DoFinishSocket, this, socket_id);
+    // EdgeDashFakeServerApplication::DoFinishSocket(socket_id);
 }
 
 void EdgeDashFakeServerApplication::DoFinishSocket(uint64_t socket_id)
 {
-  if (m_activeClients.find(socket_id) != m_activeClients.end()) {
-    // std::cout << "ENTROU DoFinishSocket\n";
-    // getchar();
+    if (m_activeClients.find(socket_id) != m_activeClients.end()) {
+        // std::cout << "ENTROU DoFinishSocket\n";
+        // getchar();
 
-    HttpServerFakeClientSocket* tmp = m_activeClients[socket_id];
-    m_activeClients.erase(socket_id);
-    delete tmp; // TODO: CHECK
-  }
+        HttpServerFakeClientSocket* tmp = m_activeClients[socket_id];
+        m_activeClients.erase(socket_id);
+        delete tmp; // TODO: CHECK
+    }
 }
 
 uint64_t EdgeDashFakeServerApplication::RegisterSocket (Ptr<Socket> socket)
@@ -455,17 +469,18 @@ bool EdgeDashFakeServerApplication::VideoAssignment(int content)
     return false;
 }
 
-void EdgeDashFakeServerApplication::AddCapacityNode(int capacity)
-{
-    m_capacity = capacity;
-    assignedVideos = 0;
-}
-
 void EdgeDashFakeServerApplication::BindVideos(int start, unsigned contentN)
 {
     for (size_t i = start; i <= contentN; i++) {
         contentVideos.push_back(i);
     }
 }
+
+void EdgeDashFakeServerApplication::AddCapacityNode(int capacity)
+{
+    m_capacity = capacity;
+    assignedVideos = 0;
+}
+
 
 }

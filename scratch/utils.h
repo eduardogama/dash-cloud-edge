@@ -9,6 +9,7 @@
 #include <vector>
 #include <fstream>
 #include <random>
+#include <cassert>
 
 #include "dash-utils.h"
 #include "dash-define.h"
@@ -19,12 +20,12 @@
 using namespace std;
 using namespace ns3;
 
-static string Ipv4AddressToString (Ipv4Address ad)
-{
-	ostringstream oss;
-	ad.Print (oss);
-	return oss.str ();
-}
+// static string Ipv4AddressToString (Ipv4Address ad)
+// {
+// 	ostringstream oss;
+// 	ad.Print (oss);
+// 	return oss.str ();
+// }
 
 string GetCurrentWorkingDir(void)
 {
@@ -66,114 +67,114 @@ template <typename T>
 bool ReadTopology(string linksFile, string nodesFile, T &net)
 {
 	// node data
-  int id;
-	string type;
-	int n=0;
-	int linecount = 0;
-	
-	ifstream nodes_file(nodesFile.c_str());
-	linecount = 0;
-	while (nodes_file) {
-		string line;
-		linecount++;
-		if (!getline(nodes_file, line)) {
-			break;
-		}
+    int id;
+    string type;
+    int n=0;
+    int linecount = 0;
 
-		cout << line << endl;
+    ifstream nodes_file(nodesFile.c_str());
+    linecount = 0;
+    while (nodes_file) {
+        string line;
+        linecount++;
+        if (!getline(nodes_file, line)) {
+           break;
+        }
 
-		if (linecount > 1) {
-			// Get each element of the demand
-			istringstream linestream( line );
-			int columncount = 1;
-			while (linestream) {
-				string s;
-				if (!getline( linestream, s, ' ' )) {
-					break;
-				}
-				switch (columncount) {
-					case 1:
-						id = std::atoi(s.c_str());
-						break;
-					case 2:
-						type = s;
-						break;
-				}
-				columncount++;
-			}
-			net.AddNode(id, type);
-			n++;
-		}
-	}
-	nodes_file.close();
+        cout << line << endl;
 
-	net.SetUpAdjList(n);
+        if (linecount > 1) {
+            // Get each element of the demand
+            istringstream linestream( line );
+            int columncount = 1;
+            while (linestream) {
+                string s;
+                if (!getline(linestream, s, ' ')) {
+                    break;
+                }
+                switch (columncount) {
+                    case 1:
+                        id = std::atoi(s.c_str());
+                        break;
+                    case 2:
+                        type = s;
+                        break;
+                }
+                columncount++;
+            }
+            net.AddNode(id, type);
+            n++;
+        }
+    }
+    nodes_file.close();
+
+    net.SetUpAdjList(n);
 
 
-	ifstream links_file(linksFile.c_str());
+    ifstream links_file(linksFile.c_str());
 
-	// link data
-  int src_id;
-  int dst_id;
-  double rate;
-  double delay;
-  double ploss;
-  double buffersize_pkts;
+    // link data
+    int src_id;
+    int dst_id;
+    double rate;
+    double delay;
+    double ploss;
+    double buffersize_pkts;
 
-	while (links_file) {
-		string line;
-		linecount++;
+    while (links_file) {
+        string line;
+        linecount++;
 
-		if (!getline(links_file, line)) {
-			break;
-		}
-		if (line == "\n") {
-			break;
-		}
+        if (!getline(links_file, line)) {
+            break;
+        }
+        if (line == "\n") {
+            break;
+        }
 
-		cout << line << endl;
+        cout << line << endl;
 
-		if (linecount > 1) {
-			istringstream linestream(line);
-			int columncount = 1;
-			while (linestream) {
-				string str;
+    	if (linecount > 1) {
+            istringstream linestream(line);
+            int columncount = 1;
+            while (linestream) {
+                string str;
 
-				if (!getline(linestream, str, ' ')) {
-					break;
-				}
+                if (!getline(linestream, str, ' ')) {
+                    break;
+                }
 
-				switch (columncount) {
-					case 1:
-						src_id = atoi(str.c_str());
-						break;
-					case 2:
-						dst_id = atoi(str.c_str());
-						break;
-					case 3:
-						rate = atof(str.c_str());
-						break;
-					case 4:
-						delay = atof(str.c_str());
-						break;
-					case 5:
-						ploss = atof(str.c_str());
-						break;
-					case 6:
-						buffersize_pkts = atof(str.c_str());
-						break;
-				}
-				columncount++;
-			}
-			net.AddLink(src_id, dst_id, rate, delay, ploss, buffersize_pkts);
-		}
-	}
-	links_file.close();
+                switch (columncount) {
+                    case 1:
+                        src_id = atoi(str.c_str());
+                        break;
+                    case 2:
+                        dst_id = atoi(str.c_str());
+                        break;
+                    case 3:
+                        rate = atof(str.c_str());
+                        break;
+                    case 4:
+                        delay = atof(str.c_str());
+                        break;
+                    case 5:
+                        ploss = atof(str.c_str());
+                        break;
+                    case 6:
+                        buffersize_pkts = atof(str.c_str());
+                        break;
+                }
+                columncount++;
+            }
+            net.AddLink(src_id, dst_id, rate, delay, ploss, buffersize_pkts);
+        }
+    }
+    links_file.close();
 
 //	net.printAdjList();
 //	getchar();
 
-	return true;
+    return true;
 }
 
 std::vector< double > sum_probs;

@@ -35,6 +35,13 @@ using namespace ns3;
 
 NS_LOG_COMPONENT_DEFINE ("BinaryTreeScenario");
 
+static string Ipv4AddressToString (Ipv4Address ad)
+{
+	ostringstream oss;
+	ad.Print (oss);
+	return oss.str ();
+}
+
 int main (int argc, char *argv[])
 {
     NetworkTopology network;
@@ -93,13 +100,14 @@ int main (int argc, char *argv[])
 
     Ptr<ControllerMain> ctrlapp = CreateObject<ControllerMain>();
     nodes.Get(dst_server)->AddApplication(ctrlapp);
-    ctrlapp->Setup(Ipv4Address::GetAny(), 1317);
+    ctrlapp->Setup(Ipv4Address::GetAny(), 1317, "ILPSolution");
     ctrlapp->setNodeContainers(&nodes);
     ctrlapp->SetStartTime(Seconds(0.0));
     ctrlapp->SetStopTime(Seconds(20.));
 
     monitor->setController(ctrlapp);
     ctrlapp->setBigTable(bigtable);
+    ctrlapp->setServerTable(&serverTableList);
 
     cout << "Node size = " << network.getNodes().size() << endl;
     for (unsigned int i = 0; i < network.getNodes().size(); i += 1) {
