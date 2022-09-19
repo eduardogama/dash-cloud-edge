@@ -17,34 +17,34 @@ using namespace ns3;
 
 class NetworkGraph
 {
-	public:
-		NetworkGraph();
-		virtual ~NetworkGraph();
+public:
+	NetworkGraph();
+	virtual ~NetworkGraph();
 
-		void setClientContainers(NodeContainer *clients);
-		NodeContainer *getClientContainers(void);
+	void setClientContainers(NodeContainer *clients);
+	NodeContainer *getClientContainers(void);
 
-		void setNodeContainers(NodeContainer *nodeContainers);
-		NodeContainer *getNodeContainers(void);
+	void setNodeContainers(NodeContainer *nodeContainers);
+	NodeContainer *getNodeContainers(void);
 
-		void SetUpAdjList(int size);
-		void AddLink(int src_id, int dst_id, double rate, double delay, double ploss, int buffersize_pkts);
+	void SetUpAdjList(int size);
+	void AddLink(int src_id, int dst_id, double rate, double delay, double ploss, int buffersize_pkts);
 
-		bool SearchRoute(unsigned s, unsigned t);
+	bool SearchRoute(unsigned s, unsigned t);
 
-		Path getRoute();
+	Path getRoute();
 
-	private:
-		bool dijkstra(unsigned s, unsigned t);
+private:
+	bool dijkstra(unsigned s, unsigned t);
 
-	private:
-		NodeContainer *clients;
-		NodeContainer *nodeContainers;
+private:
+	NodeContainer *clients;
+	NodeContainer *nodeContainers;
 
-		unsigned size;
-		Path route;
+	unsigned size;
+	Path route;
 
-		vector<vector<unsigned>> adjList;
+	vector<vector<unsigned>> adjList;
 
 };
 
@@ -92,39 +92,39 @@ bool NetworkGraph::dijkstra(unsigned s, unsigned t)
 	do
 	{
 		for (unsigned i = 0; i < adjList[k].size(); i++) {
-	    if (!discovered[adjList[k][i]]) {
-        if (dist[k] + 1 < dist[ adjList[k][i] ]) {
-          prev[adjList[k][i]] = k;
-          dist[adjList[k][i]] = dist[k] + 1;
-        }
-	    }
+	        if (!discovered[adjList[k][i]]) {
+                if (dist[k] + 1 < dist[ adjList[k][i] ]) {
+                  prev[adjList[k][i]] = k;
+                  dist[adjList[k][i]] = dist[k] + 1;
+                }
+	        }
 		}
 
 		k = 0;
 		min = inf;
 
 		for (unsigned i = 0; i < adjList.size(); i++) {
-	    if (!discovered[i] && dist[i] < min) {
-        min = dist[i];
-				k = i;
+	        if (!discovered[i] && dist[i] < min) {
+                min = dist[i];
+		        k = i;
+            }
 	    }
-		}
 
 		discovered[k] = true;
 
-		if (assegure++ >= size) //grafo disconexo
-	    return false;
+		if(assegure++ >= size) //grafo disconexo
+	        return false;
 
 	} while (k != s && s != t);
 
-  route.clear();
+    route.clear();
 
-  for (k = s; prev[k] != k; k = prev[k]){
+    for(k = s; prev[k] != k; k = prev[k]){
+        route.addLinkToPath(k);
+    }
     route.addLinkToPath(k);
-  }
-  route.addLinkToPath(k);
 
-	return true;
+    return true;
 }
 
 Path NetworkGraph::getRoute()

@@ -30,7 +30,9 @@
 
 #include <ctime>
 
+
 using namespace ns3;
+using namespace std;
 
 
 NS_LOG_COMPONENT_DEFINE ("BinaryTreeScenario");
@@ -44,20 +46,21 @@ static string Ipv4AddressToString (Ipv4Address ad)
 
 int main (int argc, char *argv[])
 {
+    map<pair<string, int>, string> serverTableList;
     NetworkTopology network;
-    std::map<pair<string,int>, string> serverTableList;
-    unsigned n_ap = 0, n_clients = 1;
-    int dst_server = 7;
+    unsigned n_clients = 1;
+    unsigned n_ap      = 0;
+    int dst_server     = 7;
+    int seed           = 0;
+    int stopTime       = 30;
 
-    string scenarioFiles = GetCurrentWorkingDir() + "/../content/scenario";
-    string requestsFile = "requests";
-    string DashTraceFile = "report.csv";
+    string scenarioFiles             = GetCurrentWorkingDir() + "/../content/scenario";
+    string requestsFile              = "requests";
+    string DashTraceFile             = "report.csv";
     string ServerThroughputTraceFile = "server_throughput.csv";
-    string RepresentationType = "netflix";
-    string hasAlgorithm = "hybrid";
+    string RepresentationType        = "netflix";
+    string hasAlgorithm              = "hybrid";
 
-    int stopTime = 30;
-    int seed = 0;
     CommandLine cmd;
 
     //default parameters
@@ -67,24 +70,21 @@ int main (int argc, char *argv[])
     cmd.AddValue("HASLogic", "Adaptation Logic to Use.", hasAlgorithm);
     cmd.AddValue("seed", "Seed experiment.", seed);
     cmd.AddValue("Client", "Number of clients per AP.", n_clients);
+    cmd.Parse(argc, argv);
 
 
-    cmd.Parse (argc, argv);
-
-    string AdaptationLogicToUse = has_algorithm(hasAlgorithm);
-    string dir = CreateDir("../btree-" + hasAlgorithm + "-" + to_string(n_clients) + "-" + to_string(seed));
-    string filePath = dir + "/Troughput_" + to_string(seed) + "_";
-
-    AdaptationLogicToUse = "dash::player::" + AdaptationLogicToUse;
-
-    Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue (1600));
+    string dir                  = CreateDir("../btree-" + hasAlgorithm + "-" + to_string(n_clients) + "-" + to_string(seed));
+    string filePath             = dir + "/Troughput_" + to_string(seed) + "_";
+    string AdaptationLogicToUse = "dash::player::" + has_algorithm(hasAlgorithm);
+     
+    Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue(1600));
     Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
 
     ReadTopology(scenarioFiles + "/btree_l3_link", scenarioFiles + "/btree_l3_nodes", network);
 
-    NS_LOG_INFO ("Create Nodes");
 
-    NodeContainer nodes; // Declare nodes objects
+    NS_LOG_INFO("Create Nodes");
+    NodeContainer nodes;    // Declare nodes objects
     NodeContainer clients;
     nodes.Create(network.getNodes().size());
 
@@ -103,19 +103,20 @@ int main (int argc, char *argv[])
     ctrlapp->Setup(Ipv4Address::GetAny(), 1317, "ILPSolution");
     ctrlapp->setNodeContainers(&nodes);
     ctrlapp->SetStartTime(Seconds(0.0));
-    ctrlapp->SetStopTime(Seconds(20.));
+    ctrlapp->SetStopTime(Seconds(stopTime));
 
     monitor->setController(ctrlapp);
     ctrlapp->setBigTable(bigtable);
     ctrlapp->setServerTable(&serverTableList);
 
     cout << "Node size = " << network.getNodes().size() << endl;
-    for (unsigned int i = 0; i < network.getNodes().size(); i += 1) {
+    for (unsigned i = 0; i < network.getNodes().size(); i += 1) {
         ostringstream ss;
         ss << network.getNodes().at(i)->getId();
         Names::Add(network.getNodes().at(i)->getType() + ss.str(), nodes.Get(network.getNodes().at(i)->getId()));
         cout << "Node name " << i << " = " << network.getNodes().at(i)->getType() << endl;
     }
+
 
     // Later we add IP Addresses
     NS_LOG_INFO("Assign IP Addresses.");
@@ -127,10 +128,10 @@ int main (int argc, char *argv[])
 
     // create p2p links
     Ipv4AddressHelper address;
-    address.SetBase ("10.0.0.0", "255.255.255.0");
+    address.SetBase("10.0.0.0", "255.255.255.0");
     PointToPointHelper p2p;
 
-    for (unsigned int i = 0; i < network.getLinks().size(); i += 1) {
+    for (unsigned i = 0; i < network.getLinks().size(); i += 1) {
         int srcnode = network.getLinks().at(i)->getSrcId();
         int dstnode = network.getLinks().at(i)->getDstId();
 
@@ -164,7 +165,7 @@ int main (int argc, char *argv[])
 	}
 
     //Store IP adresses
-    std::string addr_file = dir + "/addresses";
+    string addr_file = dir + "/addresses";
     ofstream out_addr_file(addr_file.c_str());
     for (unsigned int i = 0; i < nodes.GetN(); i++) {
         Ptr<Node> n = nodes.Get(i);
@@ -190,12 +191,12 @@ int main (int argc, char *argv[])
     Ptr<ListPositionAllocator> positionAlloc = CreateObject<ListPositionAllocator>();
 
     map<int, NodeContainer> map_aps;
-    map<int, pair< int, Ptr<Node> >> m_clients;
+    map<int, pair<int, Ptr<Node>>> m_clients;
 
     for (size_t i = 0; i < network.getNodes().size(); i++) {
         Ptr<Node> node = nodes.Get(network.getNodes().at(i)->getId());
         if (Names::FindName(node).find("ap") != string::npos) {
-            map_aps.insert(std::pair<int, NodeContainer>(network.getNodes().at(i)->getId(), NodeContainer()) );
+            map_aps.insert(pair<int, NodeContainer>(network.getNodes().at(i)->getId(), NodeContainer()));
         }
     }
 
@@ -306,7 +307,7 @@ int main (int argc, char *argv[])
     fprintf(stderr, "representations = %s\n", representationStrings.c_str ());
 
     Ptr<Node> cloudServer = nodes.Get(dst_server);
-    string strIpv4Server = Ipv4AddressToString(cloudServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+    string strIpv4Server  = Ipv4AddressToString(cloudServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
     DASHServerHelper serverCache(Ipv4Address::GetAny (), 80, strIpv4Server,
         "/content/mpds/", representationStrings, "/content/segments/");
@@ -347,17 +348,16 @@ int main (int argc, char *argv[])
 
     for (size_t i = 0; i < 1; i++) {
         representationStrings = GetCurrentWorkingDir() + "/../content/representations/netflix_vid1.csv";
-
-        Ptr<Node> edgeServer = nodes.Get(i);
-        string strIpv4Edge = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
+        Ptr<Node> edgeServer  = nodes.Get(i);
+        string strIpv4Edge    = Ipv4AddressToString(edgeServer->GetObject<Ipv4>()->GetAddress(1,0).GetLocal());
 
         EdgeDashServerHelper edgeServerCache(Ipv4Address::GetAny (), 80, strIpv4Edge,
                                 "/content/mpds/", representationStrings, "/content/segments/");
         edgeServerCache.SetAttribute("Capacity", UintegerValue(9));
 
         ApplicationContainer serverApps = edgeServerCache.Install(edgeServer);
-        serverApps.Start (Seconds(0.0));
-        serverApps.Stop (Seconds(stopTime));
+        serverApps.Start(Seconds(0.0));
+        serverApps.Stop(Seconds(stopTime));
     }
 
     //=======================================================================================
@@ -375,15 +375,14 @@ int main (int argc, char *argv[])
 
     for (auto& client : m_clients) {
         double start = poisson();
-        int content = zipf(0.7, contentN);
+        int content  = zipf(0.7, contentN);
 
         int apId             = client.second.first;
         Ptr<Node> clientNode = client.second.second;
 
-        int userId = client.first;
+        int userId       = client.first;
         int final_client = 100 * apId + userId;
-
-        int screenWidth = 1920;
+        int screenWidth  = 1920;
         int screenHeight = 1080;
 
         stringstream mpd_baseurl;

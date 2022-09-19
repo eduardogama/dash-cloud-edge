@@ -20,41 +20,41 @@ NS_OBJECT_ENSURE_REGISTERED (Monitoring);
 
 TypeId Monitoring::GetTypeId (void)
 {
-  static TypeId tid = TypeId("ns3::Monitoring")
-    .SetParent<Application> ()
-    .SetGroupName("Applications")
-    .AddConstructor<Monitoring> ()
-  ;
-  return tid;
+    static TypeId tid = TypeId("ns3::Monitoring")
+        .SetParent<Application> ()
+        .SetGroupName("Applications")
+        .AddConstructor<Monitoring> ()
+    ;
+    return tid;
 }
 
 Monitoring::Monitoring()
 {
-  NS_LOG_FUNCTION (this);
+    NS_LOG_FUNCTION (this);
 }
 
 Monitoring::~Monitoring()
 {
-  NS_LOG_FUNCTION (this);
+    NS_LOG_FUNCTION (this);
 }
 
 void Monitoring::RateCallback(string context, Ptr<const Packet> packet)
 {
-  vector<string> str_context = Split(context, "/");
+    vector<string> str_context = Split(context, "/");
 
-  int strnode = atoi(str_context[2].c_str());
-  int strdev  = atoi(str_context[4].c_str());
+    int strnode = atoi(str_context[2].c_str());
+    int strdev  = atoi(str_context[4].c_str());
 
-  Ptr<Node>      node = nodes->Get(strnode);
+    Ptr<Node>      node = nodes->Get(strnode);
 
-  Ptr<NetDevice> dev  = node->GetDevice(strdev);
-  Ptr<Ipv4>      ipv4 = node->GetObject<Ipv4>();
+    Ptr<NetDevice> dev  = node->GetDevice(strdev);
+    Ptr<Ipv4>      ipv4 = node->GetObject<Ipv4>();
 
-  Ipv4InterfaceAddress iaddr = ipv4->GetAddress (strdev,0);
+    Ipv4InterfaceAddress iaddr = ipv4->GetAddress (strdev,0);
 
-  string ipAddrBdst = Ipv4AddressToString(iaddr.GetBroadcast());
+    string ipAddrBdst = Ipv4AddressToString(iaddr.GetBroadcast());
 
-  setLinkMap(ipAddrBdst, getLinkMap(ipAddrBdst) + packet->GetSize());
+    setLinkMap(ipAddrBdst, getLinkMap(ipAddrBdst) + packet->GetSize());
 }
 
 void Monitoring::BandwidthEstimator()
@@ -73,8 +73,8 @@ void Monitoring::BandwidthEstimator()
             int actualNode = this->peerMap[iplink].first;
             int nextNode   = this->peerMap[iplink].second;
 
-            cout << actualNode << " " << nextNode << '\n';
-            getchar();
+            cout << "Congested Link = ("<< actualNode << ", " << nextNode << ")" << endl;
+
             this->controller->OptimizerComponent(actualNode, nextNode);
         }
     }
@@ -105,60 +105,60 @@ void Monitoring::setStepsTime(double stepsTime)
 
 void Monitoring::CreateFile(string strip, int srcnode, int dstnode)
 {
-  ostringstream arq;
-  ofstream filetostore;
+    ostringstream arq;
+    ofstream filetostore;
 
-  arq << pathFile << srcnode << "_" << dstnode;
+    arq << pathFile << srcnode << "_" << dstnode;
 
-  bwFile[strip] = arq.str();
+    bwFile[strip] = arq.str();
 
-  filetostore.open (arq.str().c_str(), ios::out);
-  filetostore << "Time troughput(bit/s)" << endl;
-  filetostore.close();
+    filetostore.open (arq.str().c_str(), ios::out);
+    filetostore << "Time troughput(bit/s)" << endl;
+    filetostore.close();
 }
 
 void Monitoring::StoreFile(string strip, double mbs)
 {
-  ostringstream arq;
-  ofstream filetostore;
+    ostringstream arq;
+    ofstream filetostore;
 
-  filetostore.open (bwFile[strip].c_str(), ios::out | ios::app);
-  filetostore << Simulator::Now().GetSeconds() << " "<< mbs << endl;
-  filetostore.close();
+    filetostore.open (bwFile[strip].c_str(), ios::out | ios::app);
+    filetostore << Simulator::Now().GetSeconds() << " "<< mbs << endl;
+    filetostore.close();
 }
 
 void Monitoring::setLinkMap(string link, double datarate)
 {
-  this->linkMap[link] = datarate;
+    this->linkMap[link] = datarate;
 }
 
 double Monitoring::getLinkMap(string link)
 {
-  return this->linkMap[link];
+    return this->linkMap[link];
 }
 
 void Monitoring::setLinkCapacityMap(string link, int src, int dst, double datarate)
 {
-  pair<int,int> linknode{src,dst};
-  this->peerMap[link] = linknode;
-  this->linkCapacityMap[link] = datarate;
+    pair<int,int> linknode{src,dst};
+    this->peerMap[link] = linknode;
+    this->linkCapacityMap[link] = datarate;
 }
 
 void Monitoring::setNodes(NodeContainer *nodes)
 {
-  this->nodes = nodes;
+    this->nodes = nodes;
 }
 
 NodeContainer* Monitoring::getNodes()
 {
-  return this->nodes;
+    return this->nodes;
 }
 
 string Monitoring::Ipv4AddressToString (Ipv4Address ad)
 {
-  ostringstream oss;
-  ad.Print (oss);
-  return oss.str ();
+    ostringstream oss;
+    ad.Print (oss);
+    return oss.str ();
 }
 
 }

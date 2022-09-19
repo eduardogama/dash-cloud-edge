@@ -16,35 +16,35 @@
 namespace ns3 {
 
 class BigTable : public Application {
-    public:
-        static TypeId GetTypeId();
+public:
+    static TypeId GetTypeId();
 
-        BigTable();
-        virtual ~BigTable();
+    BigTable();
+    virtual ~BigTable();
 
-        void setServerTable(map<pair<string, int>, string> *serverTable);
-        string getServerTable(string server, int content);
+    void setServerTable(map<pair<string, int>, string> *serverTable);
+    string getServerTable(string server, int content);
 
-        // void setNetwork(NetworkGraph* network);
-        // NetworkGraph* getNetwork();
+    // void setNetwork(NetworkGraph* network);
+    // NetworkGraph* getNetwork();
 
-        void setClientContainers(NodeContainer* clients);
-        NodeContainer* getClientContainers();
+    void setClientContainers(NodeContainer* clients);
+    NodeContainer* getClientContainers();
 
-        vector<GroupUser *>& getGroups();
+    vector<GroupUser *>& getGroups();
 
-        GroupUser* AddUserInGroup(unsigned from, unsigned to, int content, unsigned userId);
+    GroupUser* AddUserInGroup(unsigned from, unsigned to, int content, unsigned userId);
 
-    private:
-        string Ipv4AddressToString(Ipv4Address ad);
+private:
+    string Ipv4AddressToString(Ipv4Address ad);
 
-    protected:
-        vector<GroupUser *> groups;
+protected:
+    vector<GroupUser *> groups;
 
-    private:
-        NodeContainer* clientContainers;
+private:
+    NodeContainer* clientContainers;
 
-        map<pair<string, int>, string> *serverTable;
+    map<pair<string, int>, string> *serverTable;
 };
 
 }

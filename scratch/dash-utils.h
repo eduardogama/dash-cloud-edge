@@ -75,7 +75,7 @@ std::vector<std::string> split(const std::string& s, const std::string& delimite
     return tokens;
 }
 
-string has_algorithm(string const algo)
+string has_algorithm(string const &algo)
 {
    if (algo == "hybrid") {
        return "RateAndBufferBasedAdaptationLogic";
@@ -88,17 +88,17 @@ string has_algorithm(string const algo)
 
 bool io_read_scenario_requests(string requestssFile, vector<_Request *> & requests)
 {
-	int linecount;
+    int linecount;
 
-	// requests data
-	int id;
-	int src_id;
-	int server_id = 0;
-  double startsAt;
-  double stopsAt;
-  int videoId;
-  int screenWidth;
-  int screenHeight;
+    // requests data
+    int id;
+    int src_id;
+    int server_id = 0;
+    double startsAt;
+    double stopsAt;
+    int videoId;
+    int screenWidth;
+    int screenHeight;
 
 	// Read from Requests
 	// id, source, startsAt, stopsAt, videoId, screenWidth, screenHeight

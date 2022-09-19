@@ -21,12 +21,12 @@ NS_OBJECT_ENSURE_REGISTERED(BigTable);
 
 TypeId BigTable::GetTypeId (void)
 {
-  static TypeId tid = TypeId("ns3::BigTable")
-    .SetParent<Application> ()
-    .SetGroupName("Applications")
-    .AddConstructor<BigTable> ()
-  ;
-  return tid;
+    static TypeId tid = TypeId("ns3::BigTable")
+        .SetParent<Application> ()
+        .SetGroupName("Applications")
+        .AddConstructor<BigTable> ()
+    ;
+    return tid;
 }
 
 BigTable::BigTable()
@@ -101,9 +101,9 @@ GroupUser* BigTable::AddUserInGroup(unsigned from, unsigned to, int content, uns
 
 string BigTable::Ipv4AddressToString(Ipv4Address ad)
 {
-  ostringstream oss;
-  ad.Print(oss);
-  return oss.str();
+    ostringstream oss;
+    ad.Print(oss);
+    return oss.str();
 }
 
 }

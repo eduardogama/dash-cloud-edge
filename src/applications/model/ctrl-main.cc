@@ -19,18 +19,18 @@ NS_OBJECT_ENSURE_REGISTERED(ControllerMain);
 TypeId ControllerMain::GetTypeId()
 {
     static TypeId tid = TypeId("ns3::ControllerMain")
-    .SetParent<Application> ()
+    .SetParent<Application>()
     .SetGroupName("Applications")
-    .AddConstructor<ControllerMain> ()
+    .AddConstructor<ControllerMain>()
     .AddAttribute ("ListeningAddress",
                    "The listening Address for the inbound packets",
-                   AddressValue (),
-                   MakeAddressAccessor (&ControllerMain::m_listeningAddress),
-                   MakeAddressChecker ())
+                   AddressValue(),
+                   MakeAddressAccessor(&ControllerMain::m_listeningAddress),
+                   MakeAddressChecker())
     .AddAttribute ("Port", "Port on which we listen for incoming packets (default: 1317).",
-                   UintegerValue (1317),
-                   MakeUintegerAccessor (&ControllerMain::m_port),
-                   MakeUintegerChecker<uint16_t> ())
+                   UintegerValue(1317),
+                   MakeUintegerAccessor(&ControllerMain::m_port),
+                   MakeUintegerChecker<uint16_t>())
     ;
     return tid;
 }
@@ -73,16 +73,20 @@ bool ControllerMain::OptimizerComponent(int actualNode, int nextNode)
 bool ControllerMain::ILPSolution(int actualNode, int nextNode)
 {
     ostringstream buffer;
+    int numOfNodes = nodeContainers->GetN();
     vector<GroupUser *> groups = bigtable->getGroups();
 
+    cout << "Number of Nodes = " << numOfNodes << '\n';
+    getchar();
+    
     buffer << "python3.7 ../ILP-QoE/opt-main.py ";
     buffer << groups.size() << " ";
 	buffer << actualNode << " " << nextNode << " ";
     for (unsigned i = 0; i < groups.size(); i++) {
 		buffer << groups[i]->getAp() << " "
-            << i + 8 << " "
-            << i << " "
-            << groups[i]->getUsers().size() << " ";
+               << i + numOfNodes << " "
+               << i << " "
+               << groups[i]->getUsers().size() << " ";
     }
 
     string output = GenRandom(6);
