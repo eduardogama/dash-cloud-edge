@@ -15,12 +15,15 @@ class Path {
 		unsigned  getFrom() const {
 			return from;
 		}
+		
 		unsigned  getLength() const {
 			return length;
 		}
+		
 		unsigned  getTo() const {
 			return to;
 		}
+		
 		void addLinkToPath(unsigned next);
 		void goStart(void);
 		unsigned getActualStep(void);

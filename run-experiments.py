@@ -8,9 +8,9 @@ load_dotenv()
 def main():
 
     rep = 1 #int(os.getenv('Repetition'))                 # Number of simulations repetitions  
-    users = int(os.getenv('Users'))                    # 15
-    stopTime = int(os.getenv('StopTime'))              # Simulation duration
-    protocol = os.getenv('AdaptationLogicToUse')  # RateBasedAdaptationLogic RateAndBufferBasedAdaptationLogic
+    users = 15 #int(os.getenv('Users'))                    # 15
+    stopTime = 600 #int(os.getenv('StopTime'))              # Simulation duration
+    protocol = RateAndBufferBasedAdaptationLogic #os.getenv('AdaptationLogicToUse')  # RateBasedAdaptationLogic RateAndBufferBasedAdaptationLogic
 
     print("Initializing ...")
 

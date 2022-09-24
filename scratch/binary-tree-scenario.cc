@@ -72,13 +72,13 @@ int main (int argc, char *argv[])
     cmd.AddValue("Client", "Number of clients per AP.", n_clients);
     cmd.Parse(argc, argv);
 
-
+    Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue(1600));
+    Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
     string dir                  = CreateDir("../btree-" + hasAlgorithm + "-" + to_string(n_clients) + "-" + to_string(seed));
     string filePath             = dir + "/Troughput_" + to_string(seed) + "_";
     string AdaptationLogicToUse = "dash::player::" + has_algorithm(hasAlgorithm);
      
-    Config::SetDefault("ns3::TcpSocket::SegmentSize", UintegerValue(1600));
-    Config::SetDefault("ns3::TcpSocket::DelAckCount", UintegerValue(0));
+
 
     ReadTopology(scenarioFiles + "/btree_l3_link", scenarioFiles + "/btree_l3_nodes", network);
 
@@ -100,7 +100,7 @@ int main (int argc, char *argv[])
 
     Ptr<ControllerMain> ctrlapp = CreateObject<ControllerMain>();
     nodes.Get(dst_server)->AddApplication(ctrlapp);
-    ctrlapp->Setup(Ipv4Address::GetAny(), 1317, "ILPSolution");
+    ctrlapp->Setup(Ipv4Address::GetAny(), 1317, "QoSGreedy");
     ctrlapp->setNodeContainers(&nodes);
     ctrlapp->SetStartTime(Seconds(0.0));
     ctrlapp->SetStopTime(Seconds(stopTime));
